@@ -85,10 +85,19 @@ npm run deploy
 Ver la clave del panel: `ssh srv681041 "grep ^ADMIN_PASSWORD /opt/lemur/shared/.env"`
 Ver registros: `ssh srv681041 "pm2 logs lemur --lines 50"`
 
+## Respaldos
+
+- **Diario a las 04:30 (hora de Chile en verano; 07:30 UTC)**: `/opt/lemur/backup.sh` guarda la base de datos (`db-*.dump`) y las fotos (`uploads-*.tgz`) en `/root/backups/lemur`. Se conservan 30 días. Registro en `backup.log`.
+- **Copia en el Mac** (fuera del servidor): `npm run backup:pull` descarga los respaldos nuevos a `~/Respaldos/le-mur`. Conviene hacerlo al menos una vez por semana.
+- **Respaldo manual**: `ssh srv681041 "bash /opt/lemur/backup.sh"`
+- **Restaurar** (detiene la app, primero respalda el estado actual):
+  ```bash
+  ssh srv681041 "bash /opt/lemur/restore.sh /root/backups/lemur/db-AAAAMMDD-HHMMSS.dump /root/backups/lemur/uploads-AAAAMMDD-HHMMSS.tgz"
+  ```
+
 ## Pendiente antes de lanzar
 
 - **Correos**: `src/lib/mail.ts` solo escribe en la consola; conectar un proveedor de correo. El formulario "Avísame de nuevos sorteos" aún no guarda correos.
-- **Respaldos** automáticos de la base de datos y de `/opt/lemur/shared/uploads`.
 - **Legal**: bases del sorteo, términos y condiciones, política de privacidad y revisión de la normativa chilena de rifas y sorteos.
 
 ## Estructura

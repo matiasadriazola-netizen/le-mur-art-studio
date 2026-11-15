@@ -11,7 +11,8 @@
     "setup": "npm run db:dev && npm run db:seed",
     "db:prod": "prisma generate && prisma db push",
     "test": "tsx --test src/lib/*.test.ts",
-    "deploy": "bash scripts/deploy.sh"
+    "deploy": "bash scripts/deploy.sh",
+    "backup:pull": "bash scripts/backup-pull.sh"
   },
   "dependencies": {
     "@prisma/client": "6.19.3",
