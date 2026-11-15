@@ -3,8 +3,9 @@ import { useActionState, useEffect, useRef, useState } from 'react';
 import { saveArtwork, type FormState } from './actions';
 import { CLP } from '@/lib/format';
 
+export type PastDraw = { winnerName: string; winnerNumber: number | ''; ticketsSold: number | ''; drawAt: string; proofUrl: string };
 export type ArtworkInput = {
-  id?: string; type: 'RIFA' | 'VENTA'; title: string; artist: string; technique: string; size: string; value: number | null;
+  id?: string; type: 'RIFA' | 'VENTA' | 'PASADO'; past?: PastDraw; title: string; artist: string; technique: string; size: string; value: number | null;
   description: string; price: number; totalTickets: number; endsAt: string; policy: string; photos: string[]; soldOrHeld: number;
 };
 
@@ -67,9 +68,10 @@ export default function ArtworkForm({ initial, techniques }: { initial: ArtworkI
         {initial.id && <input type="hidden" name="id" value={initial.id} />}
         <input type="hidden" name="type" value={type} />
         {!editing && (
-          <div className="seg" role="group" aria-label="Tipo de venta">
+          <div className="seg" role="group" aria-label="Tipo de publicación">
             <button type="button" aria-pressed={type === 'RIFA'} onClick={() => setType('RIFA')}>Sorteo por ticket</button>
             <button type="button" aria-pressed={type === 'VENTA'} onClick={() => setType('VENTA')}>Venta directa</button>
+            <button type="button" aria-pressed={type === 'PASADO'} onClick={() => setType('PASADO')}>Sorteo ya realizado</button>
           </div>
         )}
         <div className="form">
@@ -106,7 +108,18 @@ export default function ArtworkForm({ initial, techniques }: { initial: ArtworkI
           </div>
         </div>
 
-        {type === 'RIFA' ? (
+        {type === 'PASADO' ? (
+          <div className="form">
+            <p className="full edit-banner" style={{ margin: 0 }}>Para publicar en Ganadores un sorteo que hiciste fuera del sitio (por ejemplo en vivo por Instagram). Se mostrará como “sorteo realizado en vivo”, sin la verificación automática del sitio.</p>
+            <label>Nombre del ganador *<input name="winnerName" defaultValue={initial.past?.winnerName ?? ''} placeholder="Ej: Valentina S." maxLength={60} /></label>
+            <label>Número ganador *<input name="winnerNumber" inputMode="numeric" defaultValue={initial.past?.winnerNumber ?? ''} placeholder="Ej: 17" /></label>
+            <label>Cantidad de tickets del sorteo *<input name="totalTickets" inputMode="numeric" defaultValue={initial.totalTickets} /></label>
+            <label>Tickets vendidos (opcional)<input name="ticketsSold" inputMode="numeric" defaultValue={initial.past?.ticketsSold ?? ''} placeholder="Si se vendieron todos, déjalo vacío" /></label>
+            <label>Precio por ticket (opcional, CLP)<input name="price" inputMode="numeric" defaultValue={initial.price || ''} /></label>
+            <label>Fecha del sorteo (hora de Chile) *<input name="drawAt" type="datetime-local" defaultValue={initial.past?.drawAt ?? ''} /></label>
+            <label className="full">Enlace de respaldo (opcional)<input name="proofUrl" type="url" defaultValue={initial.past?.proofUrl ?? ''} placeholder="https://www.instagram.com/p/… (video o post del sorteo)" /></label>
+          </div>
+        ) : type === 'RIFA' ? (
           <div className="form">
             <label>Cantidad de tickets *<input name="totalTickets" inputMode="numeric" defaultValue={initial.totalTickets} onChange={(e) => setTickets(+e.target.value.replace(/\D/g, '') || 0)} /></label>
             <label>Precio por ticket (CLP) *<input name="price" inputMode="numeric" defaultValue={initial.price} disabled={locked} onChange={(e) => setTprice(+e.target.value.replace(/\D/g, '') || 0)} /></label>
@@ -119,14 +132,14 @@ export default function ArtworkForm({ initial, techniques }: { initial: ArtworkI
         )}
         <p className="err" role="alert">{state.error}</p>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <button className="btn btn-brand" disabled={pending || busy}>{pending ? 'Guardando…' : editing ? 'Guardar cambios' : 'Publicar ahora'}</button>
+          <button className="btn btn-brand" disabled={pending || busy}>{pending ? 'Guardando…' : editing ? 'Guardar cambios' : type === 'PASADO' ? 'Publicar en Ganadores' : 'Publicar ahora'}</button>
           <a className="btn btn-line" href="/admin">Cancelar</a>
         </div>
       </div>
       <div className="previewside">
         <span className="lbl">Foto principal</span>
         {photos[0] ? <img src={photos[0].src} alt="" style={{ borderRadius: 14, width: '100%', aspectRatio: '4/5', objectFit: 'cover' }} /> : <div className="empty">Sin fotos todavía</div>}
-        <p className="muted" style={{ fontSize: 13 }}>{type === 'RIFA' ? 'Al publicar se genera la semilla secreta del sorteo y se muestra su huella en la ficha.' : 'La primera persona que pague se lleva la obra.'}</p>
+        <p className="muted" style={{ fontSize: 13 }}>{type === 'RIFA' ? 'Al publicar se genera la semilla secreta del sorteo y se muestra su huella en la ficha.' : type === 'PASADO' ? 'Aparecerá en Ganadores y en la portada con el nombre y número del ganador.' : 'La primera persona que pague se lleva la obra.'}</p>
       </div>
     </form>
   );

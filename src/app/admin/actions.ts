@@ -38,11 +38,13 @@ async function uniqueSlug(base: string, exceptId?: string) {
 export async function saveArtwork(_: FormState, fd: FormData): Promise<FormState> {
   await requireAdmin();
   const id = str(fd.get('id')) || null;
-  const existing = id ? await prisma.artwork.findUnique({ where: { id }, include: { images: { orderBy: { position: 'asc' } } } }) : null;
-  const type = existing?.type ?? (str(fd.get('type')) === 'VENTA' ? 'VENTA' : 'RIFA');
+  const existing = id ? await prisma.artwork.findUnique({ where: { id }, include: { images: { orderBy: { position: 'asc' } }, draw: true } }) : null;
+  // "PASADO": sorteo que ya se hizo fuera del sitio y solo se publica como resultado
+  const past = existing ? !!existing.draw?.external : str(fd.get('type')) === 'PASADO';
+  const type = past ? 'RIFA' : existing?.type ?? (str(fd.get('type')) === 'VENTA' ? 'VENTA' : 'RIFA');
   const title = str(fd.get('title'), 80);
   if (!title) return { error: 'Ponle un título a la obra.' };
-  if (existing && existing.status !== 'OPEN') return { error: 'Esta obra ya está cerrada y no se puede editar.' };
+  if (existing && existing.status !== 'OPEN' && !past) return { error: 'Esta obra ya está cerrada y no se puede editar.' };
 
   const base = {
     title, artist: str(fd.get('artist'), 80), size: str(fd.get('size'), 40), technique: str(fd.get('technique'), 60),
@@ -51,8 +53,21 @@ export async function saveArtwork(_: FormState, fd: FormData): Promise<FormState
 
   // Validación de precios y tickets antes de guardar fotos
   let typed: Record<string, unknown>;
+  let pastDraw: { winnerName: string; winnerNumber: number; ticketsSold: number; createdAt: Date; proofUrl: string | null } | null = null;
   const price = int(fd.get('price'));
-  if (type === 'RIFA') {
+  if (past) {
+    const total = int(fd.get('totalTickets')), drawAt = fromChileInput(str(fd.get('drawAt')));
+    const winnerName = str(fd.get('winnerName'), 60), winnerNumber = int(fd.get('winnerNumber'));
+    const ticketsSold = int(fd.get('ticketsSold')) || total, proof = str(fd.get('proofUrl'), 300);
+    if (total < 1 || total > 5000) return { error: 'Indica cuántos tickets tuvo el sorteo.' };
+    if (!drawAt || isNaN(+drawAt) || +drawAt > Date.now() + 60_000) return { error: 'Indica la fecha en que se hizo el sorteo (no puede ser futura).' };
+    if (!winnerName) return { error: 'Escribe el nombre del ganador, por ejemplo “Valentina S.”.' };
+    if (winnerNumber < 1 || winnerNumber > total) return { error: `El número ganador debe estar entre 1 y ${total}.` };
+    if (ticketsSold > total) return { error: 'Los tickets vendidos no pueden ser más que el total.' };
+    if (proof && !/^https?:\/\/\S+$/.test(proof)) return { error: 'El enlace de respaldo debe empezar con https://' };
+    pastDraw = { winnerName, winnerNumber, ticketsSold, createdAt: drawAt, proofUrl: proof || null };
+    typed = { totalTickets: total, price, endsAt: drawAt, policy: null, status: 'DRAWN' };
+  } else if (type === 'RIFA') {
     const total = int(fd.get('totalTickets'));
     const endsAt = fromChileInput(str(fd.get('endsAt')));
     const policy = ['DRAW', 'EXTEND', 'CANCEL'].includes(str(fd.get('policy'))) ? str(fd.get('policy')) : 'DRAW';
@@ -84,13 +99,20 @@ export async function saveArtwork(_: FormState, fd: FormData): Promise<FormState
   const data = { ...base, ...typed, imageUrl: photos[0] ?? null };
   const artworkId = existing
     ? (await prisma.artwork.update({ where: { id: existing.id }, data })).id
-    : (await prisma.artwork.create({ data: { ...data, price, type, slug: await uniqueSlug(title), ...(type === 'RIFA' ? newSeed() : {}) } })).id;
+    : (await prisma.artwork.create({ data: { ...data, price, type, slug: await uniqueSlug(title), ...(type === 'RIFA' && !past ? newSeed() : {}) } })).id;
+  if (pastDraw) {
+    await prisma.draw.upsert({
+      where: { artworkId },
+      update: { ...pastDraw, external: true },
+      create: { artworkId, ...pastDraw, external: true },
+    });
+  }
   await prisma.$transaction([
     prisma.artworkImage.deleteMany({ where: { artworkId } }),
     prisma.artworkImage.createMany({ data: photos.map((url, position) => ({ artworkId, url, position })) }),
   ]);
   revalidatePath('/', 'layout');
-  redirect(`/admin?ok=${encodeURIComponent(existing ? `Se guardaron los cambios de “${title}”` : `“${title}” quedó publicada`)}`);
+  redirect(`/admin?ok=${encodeURIComponent(existing ? `Se guardaron los cambios de “${title}”` : past ? `Se publicó el sorteo de “${title}” en Ganadores` : `“${title}” quedó publicada`)}`);
 }
 
 export async function extendRaffle(fd: FormData) {

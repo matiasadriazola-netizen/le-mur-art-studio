@@ -107,7 +107,7 @@ export async function housekeeping(force = false) {
 
 export async function runDraw(artworkId: string, partial: boolean) {
   const result = await prisma.$transaction(async (tx) => {
-    const a = await tx.artwork.findUnique({ where: { id: artworkId }, include: { draw: true } });
+    const a = await tx.artwork.findUnique({ where: { id: artworkId }, include: { draw: true }, omit: { seed: false } });
     if (!a || a.type !== 'RIFA' || a.draw || a.status !== 'OPEN' || !a.seed) return null;
     const tickets = await tx.ticket.findMany({
       where: { artworkId, order: { status: 'PAID' } },

@@ -97,7 +97,7 @@ export default async function Home() {
             </div>
             <div className="showcase">
               <img className="bg" src={s.showUrl || '/seed/show.svg'} alt="" />
-              {lastW && <div className="verify"><b>Último sorteo verificado</b><span style={{ fontSize: 13 }}>{lastW.winnerName} · ticket #{lastW.winnerNumber}</span><div className="mono">{lastW.drawCode}</div></div>}
+              {lastW && <div className="verify"><b>{lastW.drawExternal ? 'Último sorteo' : 'Último sorteo verificado'}</b><span style={{ fontSize: 13 }}>{lastW.winnerName} · ticket #{lastW.winnerNumber}</span><div className="mono">{lastW.drawExternal ? 'Realizado en vivo' : lastW.drawCode}</div></div>}
               <div className="minis">{minis.map((a) => <Link key={a.id} className="mini" href={`/obra/${a.slug}`} aria-label={`Ver ${a.title}`}><Img a={a} /><span className="arrow"><Icon name="arrow" /></span></Link>)}</div>
             </div>
           </div>
@@ -121,10 +121,10 @@ export default async function Home() {
           <div className="sec-head"><div><span className="tag">Ganadores</span><h2>Sorteos realizados</h2></div><p className="sec-sub">Se publica el nombre y la inicial del apellido de cada ganador.</p></div>
           <div className="wlist">
             {drawn.length ? drawn.map((a) => (
-              <Link key={a.id} className="wcard" href={`/verificar/${a.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+              <Link key={a.id} className="wcard" href={a.drawExternal ? `/obra/${a.slug}` : `/verificar/${a.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                 <div className="stubn">#{String(a.winnerNumber).padStart(2, '0')}</div>
                 <div className="info"><b>{a.winnerName}</b><span>ganó “{a.title}”{deArtist(a.artist)}</span>
-                  <span className="mono">{new Date(a.drawAt!).toLocaleDateString('es-CL', { dateStyle: 'medium' })} · {a.drawSold} tickets · {a.drawCode}</span></div>
+                  <span className="mono">{new Date(a.drawAt!).toLocaleDateString('es-CL', { dateStyle: 'medium' })} · {a.drawSold} tickets · {a.drawExternal ? 'sorteo en vivo' : a.drawCode}</span></div>
               </Link>
             )) : <div className="empty">Aún no hay sorteos realizados.</div>}
           </div>

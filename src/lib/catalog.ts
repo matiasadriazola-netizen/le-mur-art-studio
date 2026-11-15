@@ -5,7 +5,7 @@ export type CardItem = {
   id: string; slug: string; type: 'RIFA' | 'VENTA'; title: string; artist: string; technique: string; size: string;
   price: number; value: number | null; imageUrl: string | null; status: string; createdAt: string;
   totalTickets: number | null; sold: number; endsAt: string | null;
-  winnerName: string | null; winnerNumber: number | null; drawCode: string | null; drawAt: string | null; drawSold: number | null;
+  winnerName: string | null; winnerNumber: number | null; drawCode: string | null; drawAt: string | null; drawSold: number | null; drawExternal: boolean; drawProof: string | null;
 };
 
 export async function catalog(): Promise<CardItem[]> {
@@ -20,6 +20,7 @@ export async function catalog(): Promise<CardItem[]> {
     totalTickets: a.totalTickets, sold: counts[a.id] ?? 0, endsAt: a.endsAt?.toISOString() ?? null,
     winnerName: a.draw?.winnerName ?? null, winnerNumber: a.draw?.winnerNumber ?? null, drawCode: a.draw?.code ?? null,
     drawAt: a.draw?.createdAt.toISOString() ?? null, drawSold: a.draw?.ticketsSold ?? null,
+    drawExternal: !!a.draw?.external, drawProof: a.draw?.proofUrl ?? null,
   }));
 }
 

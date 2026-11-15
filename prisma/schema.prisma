@@ -94,12 +94,14 @@ model Draw {
   artwork      Artwork  @relation(fields: [artworkId], references: [id], onDelete: Cascade)
   winnerNumber Int
   winnerName   String
-  orderId      String
+  orderId      String   @default("")
   ticketsSold  Int
   partial      Boolean  @default(false) // true si se sorteó al vencer el plazo sin completar
-  ticketList   String // "numero:orden" ordenados, lo que entró al cálculo
-  digest       String // sha256(seed|ticketList)
-  code         String // código corto para publicar
+  ticketList   String   @default("") // "numero:orden" ordenados, lo que entró al cálculo
+  digest       String   @default("") // sha256(seed|ticketList)
+  code         String   @default("") // código corto para publicar
+  external     Boolean  @default(false) // sorteo hecho fuera del sitio (p. ej. en vivo por Instagram)
+  proofUrl     String? // enlace de respaldo de un sorteo externo
   createdAt    DateTime @default(now())
 }
 

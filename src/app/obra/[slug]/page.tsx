@@ -63,7 +63,8 @@ export default async function ObraPage({ params }: { params: Promise<{ slug: str
   }
 
   const [{ sold, held }, plist] = await Promise.all([ticketMap(a.id), participants(a.id)]);
-  const total = a.totalTickets ?? 0, soldN = Object.keys(sold).length, closed = a.status !== 'OPEN';
+  const external = !!a.draw?.external;
+  const total = a.totalTickets ?? 0, soldN = external ? a.draw!.ticketsSold : Object.keys(sold).length, closed = a.status !== 'OPEN';
   const people = new Set(plist.map((p) => p.name)).size;
   const left = total - soldN - held.length;
 
@@ -79,7 +80,7 @@ export default async function ObraPage({ params }: { params: Promise<{ slug: str
             <h1>{a.title}</h1>{meta(a.artist, a.technique, a.size) && <span className="muted">{meta(a.artist, a.technique, a.size)}</span>}
           </div>
           <div className="dstats">
-            <div><b>{CLP(a.price)}</b><span>por ticket</span></div>
+            <div><b>{a.price ? CLP(a.price) : '—'}</b><span>por ticket</span></div>
             <div><b>{soldN}/{total}</b><span>vendidos</span></div>
             <div><b>{closed ? 0 : Math.max(0, left)}</b><span>disponibles</span></div>
             <div><b>{a.value ? CLP(a.value) : '—'}</b><span>valor de la obra</span></div>
@@ -98,12 +99,16 @@ export default async function ObraPage({ params }: { params: Promise<{ slug: str
               <span className="lbl">Ganador del sorteo</span><span className="big">{a.draw.winnerName}</span>
               <span>Ticket <span className="tnum">#{a.draw.winnerNumber}</span> · {fmtLong(a.draw.createdAt)}</span>
               {a.draw.partial && <span className="muted" style={{ fontSize: 13 }}>Se cumplió el plazo y se sorteó entre los {a.draw.ticketsSold} tickets vendidos.</span>}
-              <span className="code mono">Código: {a.draw.code} · <Link href={`/verificar/${a.slug}`}>Verificar sorteo</Link></span>
+              {external
+                ? <span className="muted" style={{ fontSize: 14 }}>Sorteo realizado en vivo{a.draw.proofUrl ? <> · <a href={a.draw.proofUrl} target="_blank" rel="noopener noreferrer">Ver el sorteo</a></> : null}</span>
+                : <span className="code mono">Código: {a.draw.code} · <Link href={`/verificar/${a.slug}`}>Verificar sorteo</Link></span>}
             </div>
           )}
           {a.status === 'CANCELLED' && <div className="result"><span className="lbl">Sorteo cancelado</span><span>Se cumplió el plazo sin completar los tickets. Se devuelve el dinero a todos los compradores.</span></div>}
 
-          <Tabs
+          {external ? (
+            <div className="dpanel">{specs}{a.description && <p className="muted" style={{ fontSize: 14 }}>{a.description}</p>}</div>
+          ) : <Tabs
             initial={closed ? 'participantes' : 'comprar'}
             tabs={[
               { key: 'comprar', label: closed ? 'Tickets' : 'Comprar tickets', content: <TicketPicker artworkId={a.id} total={total} price={a.price} sold={sold} held={held} closed={closed} /> },
@@ -128,7 +133,7 @@ export default async function ObraPage({ params }: { params: Promise<{ slug: str
                 ),
               },
             ]}
-          />
+          />}
         </div>
       </div>
     </main>

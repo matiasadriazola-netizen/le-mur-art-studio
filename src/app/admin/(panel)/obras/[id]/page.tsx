@@ -18,7 +18,10 @@ export default async function EditObra({ params }: { params: Promise<{ id: strin
   const soldN = plist.reduce((n, p) => n + p.numbers.length, 0);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
-      {a.status === 'OPEN' ? (
+      {a.draw?.external ? (
+        <ArtworkForm techniques={await techniqueOptions()} initial={{ id: a.id, type: 'PASADO', title: a.title, artist: a.artist, technique: a.technique, size: a.size, value: a.value, description: a.description ?? '', price: a.price, totalTickets: a.totalTickets ?? 1, endsAt: '', policy: 'DRAW', photos: a.images.length ? a.images.map((i) => i.url) : a.imageUrl ? [a.imageUrl] : [], soldOrHeld: 0,
+          past: { winnerName: a.draw.winnerName, winnerNumber: a.draw.winnerNumber, ticketsSold: a.draw.ticketsSold === (a.totalTickets ?? 0) ? '' : a.draw.ticketsSold, drawAt: toChileInput(a.draw.createdAt), proofUrl: a.draw.proofUrl ?? '' } }} />
+      ) : a.status === 'OPEN' ? (
         <ArtworkForm techniques={await techniqueOptions()} initial={{ id: a.id, type: a.type as 'RIFA' | 'VENTA', title: a.title, artist: a.artist, technique: a.technique, size: a.size, value: a.value, description: a.description ?? '', price: a.price, totalTickets: a.totalTickets ?? 20, endsAt: a.endsAt ? toChileInput(a.endsAt) : '', policy: a.policy ?? 'DRAW', photos: a.images.length ? a.images.map((i) => i.url) : a.imageUrl ? [a.imageUrl] : [], soldOrHeld: held }} />
       ) : (
         <div className="panel" style={{ padding: 24 }}><h2 style={{ fontSize: 26 }}>{a.title}</h2><p className="muted">{meta(a.artist, a.size, CLP(a.price) + (a.type === 'RIFA' ? ' por ticket' : ''))}</p>
@@ -27,7 +30,7 @@ export default async function EditObra({ params }: { params: Promise<{ id: strin
           {buyer && <p style={{ marginTop: 10 }}>Comprada por <b>{publicName(buyer.firstName, buyer.lastName)}</b> ({buyer.email}) · despacho a {buyer.comuna} · {buyer.paidAt && fmtLong(buyer.paidAt)}</p>}
         </div>
       )}
-      {a.type === 'RIFA' && (
+      {a.type === 'RIFA' && !a.draw?.external && (
         <div className="panel" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
             <h2 style={{ fontSize: 24 }}>Participantes</h2>

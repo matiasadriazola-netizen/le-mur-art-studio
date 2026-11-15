@@ -48,7 +48,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                   <td className="mono">{CLP(a.price)}{a.type === 'RIFA' && <span className="muted"> /ticket</span>}</td>
                   <td className="mono">{CLP(income)}</td>
                   <td><div className="acts">
-                    <Link className="btn btn-line btn-sm" href={`/admin/obras/${a.id}`}>{a.status === 'OPEN' ? 'Editar' : 'Detalle'}</Link>
+                    <Link className="btn btn-line btn-sm" href={`/admin/obras/${a.id}`}>{a.status === 'OPEN' || a.draw?.external ? 'Editar' : 'Detalle'}</Link>
                     {a.type === 'RIFA' && a.status === 'OPEN' && <form action={extendRaffle}><input type="hidden" name="id" value={a.id} /><button className="btn btn-line btn-sm">+7 días</button></form>}
                     <Link className="btn btn-line btn-sm" href={`/obra/${a.slug}`}>Ver</Link>
                     {a._count.orders === 0 && <ConfirmAction action={deleteArtwork} id={a.id} label="Eliminar" confirm="¿Eliminar?" danger />}

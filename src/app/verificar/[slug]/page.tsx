@@ -4,9 +4,24 @@ import { prisma } from '@/lib/db';
 import { fmtLong } from '@/lib/format';
 
 export default async function Verificar({ params }: { params: Promise<{ slug: string }> }) {
-  const a = await prisma.artwork.findUnique({ where: { slug: (await params).slug }, include: { draw: true } });
+  const a = await prisma.artwork.findUnique({ where: { slug: (await params).slug }, include: { draw: true }, omit: { seed: false } });
   if (!a || a.type !== 'RIFA') notFound();
   const d = a.draw;
+  if (d?.external) {
+    return (
+      <main className="wrap page" style={{ paddingBottom: 64, maxWidth: 820 }}>
+        <Link className="back" href={`/obra/${a.slug}`}>← Volver a la obra</Link>
+        <h1 style={{ fontSize: 'clamp(30px,4vw,44px)', marginBottom: 18 }}>Sorteo de “{a.title}”</h1>
+        <div className="verify-box">
+          <span className="lbl">Sorteo realizado en vivo</span>
+          <p>Este sorteo se realizó en vivo, fuera del sistema de sorteos del sitio, por eso no tiene la verificación automática.{d.proofUrl ? ' Puedes ver el registro del sorteo aquí:' : ''}</p>
+          {d.proofUrl && <a href={d.proofUrl} target="_blank" rel="noopener noreferrer">{d.proofUrl}</a>}
+          <p style={{ fontSize: 22 }}>Ticket <b>#{d.winnerNumber}</b> · {d.winnerName}</p>
+          <p className="muted" style={{ fontSize: 14 }}>{fmtLong(d.createdAt)}</p>
+        </div>
+      </main>
+    );
+  }
   return (
     <main className="wrap page" style={{ paddingBottom: 64, maxWidth: 820 }}>
       <Link className="back" href={`/obra/${a.slug}`}>← Volver a la obra</Link>
@@ -22,7 +37,7 @@ export default async function Verificar({ params }: { params: Promise<{ slug: st
             <span className="lbl">2 · El sorteo ({fmtLong(d.createdAt)})</span>
             <p>Se usaron los {d.ticketsSold} tickets pagados, ordenados por número, en formato <code>número:orden</code>:</p>
             <code style={{ maxHeight: 160, overflow: 'auto', display: 'block' }}>{d.ticketList}</code>
-            <p>Semilla revelada:</p><code>{a.seed}</code>
+            <p>Semilla revelada:</p><code>{d.external ? '' : a.seed}</code>
             <p>Se calcula <code>SHA-256(semilla + &quot;|&quot; + lista)</code>:</p><code>{d.digest}</code>
             <p>Ese número (en hexadecimal) módulo {d.ticketsSold} da la posición del ganador en la lista.</p>
           </div>
