@@ -41,7 +41,7 @@ export default async function Home() {
         {s.heroUrl ? <img className="bg" src={s.heroUrl} alt="" /> : <img className="bg" src="/seed/hero.svg" alt="" />}
         <div className="wrap">
           <div>
-            <span className="tag">Arte original · Sorteos verificables</span>
+            <span className="tag">Best Artist. Paintings</span>
             <h1>{s.title}<br /><b>{s.highlight}</b></h1>
             <p className="lead">{s.lead}</p>
             <div className="hero-ctas">
