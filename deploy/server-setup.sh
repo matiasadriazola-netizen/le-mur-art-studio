@@ -32,5 +32,5 @@ fi
 # Cron: cierra sorteos vencidos aunque nadie visite el sitio
 KEY=$(grep ^CRON_SECRET= /opt/lemur/shared/.env | cut -d= -f2)
 LINE="* * * * * curl -s -m 20 -H 'Host: www.lemurstudio.cl' 'http://127.0.0.1:3040/api/cron?key=${KEY}' >/dev/null 2>&1 # lemur-cron"
-( crontab -l 2>/dev/null | grep -v '# lemur-cron' ; echo "$LINE" ) | crontab -
+{ crontab -l 2>/dev/null | grep -v '# lemur-cron' || true; echo "$LINE"; } | crontab -
 echo "setup ok"
