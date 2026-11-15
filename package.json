@@ -6,10 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "db:push": "prisma db push",
+    "db:dev": "node scripts/dev-schema.mjs && prisma db push --schema prisma/dev.schema.prisma",
     "db:seed": "tsx prisma/seed.ts",
-    "setup": "prisma db push && tsx prisma/seed.ts",
-    "test": "tsx --test src/lib/*.test.ts"
+    "setup": "npm run db:dev && npm run db:seed",
+    "db:prod": "prisma generate && prisma db push",
+    "test": "tsx --test src/lib/*.test.ts",
+    "deploy": "bash scripts/deploy.sh"
   },
   "dependencies": {
     "@prisma/client": "6.19.3",

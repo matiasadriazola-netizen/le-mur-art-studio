@@ -1,12 +1,12 @@
 // Le Mur Art Studio — modelo de datos
-// En desarrollo usa SQLite. Para producción cambia provider a "postgresql".
+// Producción: PostgreSQL. En desarrollo `npm run setup` genera una copia para SQLite (prisma/dev.schema.prisma).
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
