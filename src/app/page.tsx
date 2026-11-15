@@ -146,11 +146,11 @@ export default async function Home() {
           <div className="fcols">
             <div><b>Explorar</b><Link href="/#sorteos">Sorteos</Link><Link href="/#venta">Venta directa</Link><Link href="/#ganadores">Ganadores</Link></div>
             <div><b>Ayuda</b><Link href="/#como">Cómo funciona</Link><Link href="/#como">Envíos</Link></div>
-            <div><b>Estudio</b><Link href="/admin">Administración</Link></div>
+            <div><b>Estudio</b><a href="https://www.instagram.com/le.mur.studio/" target="_blank" rel="noopener noreferrer" className="ig"><Icon name="ig" size={16} />@le.mur.studio</a><Link href="/admin">Administración</Link></div>
           </div>
           <NewsForm />
         </div>
-        <footer className="base"><span>© {new Date().getFullYear()} {s.name}</span><span>Pagos procesados por Webpay (Transbank)</span></footer>
+        <footer className="base"><span>© {new Date().getFullYear()} {s.name} · <a href="https://www.instagram.com/le.mur.studio/" target="_blank" rel="noopener noreferrer">Instagram @le.mur.studio</a></span><span>Pagos procesados por Webpay (Transbank)</span></footer>
       </div>
     </div>
   );
