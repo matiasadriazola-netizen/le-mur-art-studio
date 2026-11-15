@@ -65,11 +65,30 @@ Más tarjetas de prueba: https://www.transbankdevelopers.cl/documentacion/como_e
   `GET https://www.lemurstudio.cl/api/cron?key=<CRON_SECRET>`
 - Si un sorteo vence sin completarse se aplica la regla elegida al publicarlo: sortear entre los vendidos, extender 7 días o cancelar. Si se cancela, los pagos quedan en **Pagos y reembolsos** para devolverlos por Webpay.
 
+## Servidor de producción (VPS Hostinger srv681041)
+
+- Sitio: https://www.lemurstudio.cl (nginx → app en `127.0.0.1:3040`, proceso pm2 `lemur`)
+- Código: `/opt/lemur/current` (enlace a la última versión en `/opt/lemur/releases`)
+- Configuración y secretos: `/opt/lemur/shared/.env` (solo en el servidor)
+- Fotos subidas: `/opt/lemur/shared/uploads` (nginx las sirve en `/uploads/`)
+- Base de datos: PostgreSQL local, base `lemur`
+- nginx: `/etc/nginx/sites-available/lemurstudio.cl` (copia en `deploy/nginx-lemurstudio.conf`)
+- Cron cada minuto a `/api/cron` (cierra sorteos vencidos)
+- Certificado HTTPS de Let's Encrypt; certbot lo renueva solo
+
+Publicar cambios (desde el Mac, con el commit hecho):
+
+```bash
+npm run deploy
+```
+
+Ver la clave del panel: `ssh srv681041 "grep ^ADMIN_PASSWORD /opt/lemur/shared/.env"`
+Ver registros: `ssh srv681041 "pm2 logs lemur --lines 50"`
+
 ## Pendiente antes de lanzar
 
-- **Base de datos**: cambiar SQLite por PostgreSQL (`provider` en `prisma/schema.prisma`).
 - **Correos**: `src/lib/mail.ts` solo escribe en la consola; conectar un proveedor de correo. El formulario "Avísame de nuevos sorteos" aún no guarda correos.
-- **Hosting y dominio** `www.lemurstudio.cl`, con HTTPS (conviene redirigir `lemurstudio.cl` a `www.lemurstudio.cl`). Las fotos subidas se guardan en `public/uploads`, así que el servidor necesita disco persistente (o mover las imágenes a un almacenamiento externo).
+- **Respaldos** automáticos de la base de datos y de `/opt/lemur/shared/uploads`.
 - **Legal**: bases del sorteo, términos y condiciones, política de privacidad y revisión de la normativa chilena de rifas y sorteos.
 
 ## Estructura
