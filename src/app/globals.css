@@ -8,7 +8,7 @@
   --nav-solid:rgba(242,240,235,.86); --band:#161512; --logo-filter:brightness(0) opacity(.88); --band-ink:#F3EEE5;
   --shadow:0 1px 2px rgba(16,20,17,.04),0 18px 40px -24px rgba(16,20,17,.3);
   --r-xl:28px; --r-lg:22px; --r-md:16px; --r-sm:10px;
-  --f-sans:var(--font-geist),"Geist","Inter","Helvetica Neue",Arial,system-ui,sans-serif;
+  --f-sans:var(--font-geist-sans),"Geist","Inter","Helvetica Neue",Arial,system-ui,sans-serif;
   --f-mono:var(--font-geist-mono),"Geist Mono",ui-monospace,"SF Mono",Menlo,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){

@@ -1,13 +1,12 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { GeistSans } from 'geist/font/sans';
+import { GeistMono } from 'geist/font/mono';
 import './globals.css';
 import Header from '@/components/Header';
 import { IconSprite } from '@/components/Icons';
 import { getSettings } from '@/lib/settings';
 import { isWebpayTest } from '@/lib/webpay';
 
-const geist = Geist({ subsets: ['latin'], variable: '--font-geist', weight: ['300', '400', '500', '600'] });
-const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono', weight: ['400', '500'] });
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const s = await getSettings();
   return (
-    <html lang="es" className={`${geist.variable} ${geistMono.variable}`}>
+    <html lang="es" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <body>
         <IconSprite />
         {isWebpayTest() && <div className="testbanner">Modo de pruebas de Webpay: no se cobra dinero real.</div>}
