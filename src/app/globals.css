@@ -459,3 +459,12 @@ a.ov,a.mini{color:var(--on-img)}
 .fcols a.ig{display:inline-flex;align-items:center;gap:6px}
 footer.base a{color:inherit}
 .hero > .wrap{padding-bottom:56px}
+.frame-rows{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.frame-row{display:grid;grid-template-columns:1fr 130px auto;gap:8px;align-items:center}
+.frame-row input{font-size:15px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--bg);color:var(--ink);min-width:0}
+@media (max-width:560px){.frame-row{grid-template-columns:1fr 100px;}.frame-row .btn{grid-column:1/-1;justify-self:start}}
+.frame-pick{display:flex;flex-direction:column;gap:8px}
+.frame-pick label{display:flex;flex-direction:row;align-items:center;gap:10px;border:1px solid var(--line);border-radius:var(--r-sm);padding:12px 14px;cursor:pointer;color:var(--ink);font-size:15px;font-weight:500}
+.frame-pick label:has(input:checked){border-color:var(--brand);background:color-mix(in srgb,var(--brand) 8%,var(--surface))}
+.frame-pick input{width:auto;accent-color:var(--brand)}
+.frame-pick .x{margin-left:auto;font-family:var(--f-mono);font-size:14px;color:var(--muted)}

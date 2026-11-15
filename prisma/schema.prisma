@@ -42,6 +42,19 @@ model Artwork {
   orders  Order[]
   draw    Draw?
   images  ArtworkImage[]
+  frameOptions FrameOption[]
+}
+
+/// Marcos que el comprador puede elegir en venta directa, con precio adicional
+model FrameOption {
+  id        String  @id @default(cuid())
+  artworkId String
+  artwork   Artwork @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+  name      String
+  extra     Int     @default(0) // CLP que se suman al precio de la obra
+  position  Int     @default(0)
+
+  @@index([artworkId, position])
 }
 
 model ArtworkImage {
@@ -64,6 +77,8 @@ model Order {
   email      String
   comuna     String?
   numbers    String    @default("") // tickets pedidos, separados por coma
+  frameName  String? // marco elegido (venta directa)
+  frameExtra Int       @default(0)
   amount     Int
   // PENDING | PAID | REJECTED | ABORTED | EXPIRED | REFUND_PENDING | REFUNDED
   status     String    @default("PENDING")

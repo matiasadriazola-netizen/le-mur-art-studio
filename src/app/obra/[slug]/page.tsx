@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ObraPage({ params }: { params: Promise<{ slug: string }> }) {
   await housekeeping();
-  const a = await prisma.artwork.findUnique({ where: { slug: (await params).slug }, include: { draw: true, images: { orderBy: { position: 'asc' } } } });
+  const a = await prisma.artwork.findUnique({ where: { slug: (await params).slug }, include: { draw: true, images: { orderBy: { position: 'asc' } }, frameOptions: { orderBy: { position: 'asc' } } } });
   if (!a) notFound();
   const photos = a.images.length ? a.images.map((i) => i.url) : a.imageUrl ? [a.imageUrl] : [];
 
@@ -48,13 +48,13 @@ export default async function ObraPage({ params }: { params: Promise<{ slug: str
               {a.status === 'SOLD' ? <span className="pill sold">Vendido</span> : <span className="pill sale">Venta directa · Precio único</span>}
               <h1>{a.title}</h1>{meta(a.artist, a.technique, a.size) && <span className="muted">{meta(a.artist, a.technique, a.size)}</span>}
             </div>
-            <div className="counter"><b>{CLP(a.price)}</b><span className="muted">obra única · incluye embalaje</span></div>
+            <div className="counter"><b>{CLP(a.price)}</b><span className="muted">{a.frameOptions.some((f) => f.extra > 0) ? 'precio base · el marco se elige abajo' : 'obra única · incluye embalaje'}</span></div>
             {a.status === 'SOLD' ? (
               <div className="result"><span className="lbl">Esta obra ya fue vendida</span><span>Mira los sorteos activos: puede haber otra obra{deArtist(a.artist)}.</span><Link className="btn btn-line" href="/#sorteos" style={{ alignSelf: 'flex-start' }}>Ver sorteos por ticket</Link></div>
             ) : reserved ? (
               <div className="result"><span className="lbl">Reservada</span><span>Otra persona está pagando esta obra en este momento. Si no completa el pago, vuelve a estar disponible a las {a.reservedUntil!.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Santiago' })}.</span></div>
             ) : (
-              <SaleCheckout artworkId={a.id} price={a.price} />
+              <SaleCheckout artworkId={a.id} price={a.price} frames={a.frameOptions.map((f) => ({ id: f.id, name: f.name, extra: f.extra }))} />
             )}
           </div>
         </div>

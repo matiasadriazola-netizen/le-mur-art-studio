@@ -14,7 +14,7 @@ export async function POST(req: Request) {
   try {
     const buyer = validateBuyer(body as never, artwork.type === 'VENTA');
     const buyOrder = newBuyOrder();
-    const order = await createOrder(artworkId, Array.isArray(body.numbers) ? (body.numbers as number[]) : [], buyer, buyOrder);
+    const order = await createOrder(artworkId, Array.isArray(body.numbers) ? (body.numbers as number[]) : [], buyer, buyOrder, body.frameOptionId ? String(body.frameOptionId) : null);
     orderId = order.id;
     const base = process.env.APP_URL || new URL(req.url).origin;
     const tx = await webpay().create(buyOrder, order.id, order.amount, `${base}/api/webpay/return`);

@@ -53,6 +53,7 @@ export async function saveArtwork(_: FormState, fd: FormData): Promise<FormState
 
   // Validación de precios y tickets antes de guardar fotos
   let typed: Record<string, unknown>;
+  let frameOpts: { name: string; extra: number }[] = [];
   let pastDraw: { winnerName: string; winnerNumber: number; ticketsSold: number; createdAt: Date; proofUrl: string | null } | null = null;
   const price = int(fd.get('price'));
   if (past) {
@@ -79,7 +80,14 @@ export async function saveArtwork(_: FormState, fd: FormData): Promise<FormState
     typed = { totalTickets: total, endsAt, policy, ...(sold === 0 ? { price } : {}) };
   } else {
     if (price < 1000) return { error: 'Indica un precio de venta válido.' };
-    typed = { price };
+    try {
+      const raw = JSON.parse(str(fd.get('frameOptions'), 5000) || '[]') as { name?: unknown; extra?: unknown }[];
+      frameOpts = raw.map((o) => ({ name: String(o.name ?? '').trim().slice(0, 60), extra: Math.max(0, Math.round(Number(o.extra) || 0)) })).filter((o) => o.name);
+    } catch { return { error: 'No se pudieron leer las opciones de marco.' }; }
+    if (frameOpts.length > 10) return { error: 'Puedes ofrecer hasta 10 opciones de marco.' };
+    if (new Set(frameOpts.map((o) => o.name.toLowerCase())).size !== frameOpts.length) return { error: 'Hay opciones de marco repetidas.' };
+    if (frameOpts.some((o) => o.extra > 10_000_000)) return { error: 'Revisa el precio adicional de los marcos.' };
+    typed = { price, frame: frameOpts.length === 1 ? frameOpts[0].name : base.frame };
   }
 
   // Fotos: el orden llega como ["url:/uploads/a.jpg", "new:0", ...]; la primera es la principal
@@ -100,6 +108,12 @@ export async function saveArtwork(_: FormState, fd: FormData): Promise<FormState
   const artworkId = existing
     ? (await prisma.artwork.update({ where: { id: existing.id }, data })).id
     : (await prisma.artwork.create({ data: { ...data, price, type, slug: await uniqueSlug(title), ...(type === 'RIFA' && !past ? newSeed() : {}) } })).id;
+  if (type === 'VENTA') {
+    await prisma.$transaction([
+      prisma.frameOption.deleteMany({ where: { artworkId } }),
+      prisma.frameOption.createMany({ data: frameOpts.map((o, position) => ({ artworkId, ...o, position })) }),
+    ]);
+  }
   if (pastDraw) {
     await prisma.draw.upsert({
       where: { artworkId },

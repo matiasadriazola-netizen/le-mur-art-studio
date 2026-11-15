@@ -155,7 +155,7 @@ export function validateBuyer(b: Partial<Buyer>, needsComuna: boolean): Buyer {
 }
 
 /** Crea la orden y reserva los números (sorteo) o la obra (venta directa) antes de ir a Webpay. */
-export async function createOrder(artworkId: string, numbers: number[], buyer: Buyer, buyOrder: string) {
+export async function createOrder(artworkId: string, numbers: number[], buyer: Buyer, buyOrder: string, frameOptionId: string | null = null) {
   await housekeeping(true);
   const a = await prisma.artwork.findUnique({ where: { id: artworkId } });
   if (!a || a.status !== 'OPEN') throw new UserError('Esta obra ya no está disponible.');
@@ -181,9 +181,18 @@ export async function createOrder(artworkId: string, numbers: number[], buyer: B
     }
   }
 
-  // Venta directa: reserva atómica de la obra
+  // Venta directa: si la obra ofrece marcos, el comprador debe elegir uno y su precio se suma
+  const frames = await prisma.frameOption.findMany({ where: { artworkId } });
+  let frame: { name: string; extra: number } | null = null;
+  if (frames.length) {
+    const f = frames.find((x) => x.id === frameOptionId);
+    if (!f) throw new UserError('Elige un tipo de marco.');
+    frame = { name: f.name, extra: f.extra };
+  }
   return prisma.$transaction(async (tx) => {
-    const order = await tx.order.create({ data: { artworkId, ...buyer, amount: a.price, buyOrder } });
+    const order = await tx.order.create({
+      data: { artworkId, ...buyer, amount: a.price + (frame?.extra ?? 0), buyOrder, frameName: frame?.name ?? null, frameExtra: frame?.extra ?? 0 },
+    });
     const res = await tx.artwork.updateMany({
       where: { id: artworkId, status: 'OPEN', OR: [{ reservedUntil: null }, { reservedUntil: { lt: new Date() } }] },
       data: { reservedOrderId: order.id, reservedUntil: new Date(Date.now() + HOLD_MINUTES * 60_000) },
@@ -231,7 +240,7 @@ export async function settleOrder(orderId: string, c: Commit) {
   const a = order.artwork;
   if (a.type === 'VENTA') {
     await prisma.artwork.update({ where: { id: a.id }, data: { status: 'SOLD', reservedOrderId: null, reservedUntil: null } });
-    await sendMail(order.email, `Compraste "${a.title}"`, `Pagaste ${CLP(order.amount)} por "${a.title}"${deArtist(a.artist)}. Te contactaremos para coordinar el despacho a ${order.comuna ?? 'tu comuna'}.`);
+    await sendMail(order.email, `Compraste "${a.title}"`, `Pagaste ${CLP(order.amount)} por "${a.title}"${deArtist(a.artist)}${order.frameName ? `, con ${order.frameName}` : ''}. Te contactaremos para coordinar el despacho a ${order.comuna ?? 'tu comuna'}.`);
   } else {
     await sendMail(order.email, `Tus tickets para "${a.title}"`,
       `Compraste los tickets ${order.numbers.split(',').map((n) => '#' + n).join(', ')} por ${CLP(order.amount)}.\nEl sorteo se hace al venderse el último ticket${a.endsAt ? ` o el ${fmtLong(a.endsAt)}` : ''}.`);

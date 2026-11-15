@@ -5,7 +5,7 @@ import { CLP } from '@/lib/format';
 
 export type PastDraw = { winnerName: string; winnerNumber: number | ''; ticketsSold: number | ''; drawAt: string; proofUrl: string };
 export type ArtworkInput = {
-  id?: string; type: 'RIFA' | 'VENTA' | 'PASADO'; past?: PastDraw; frame?: string; title: string; artist: string; technique: string; size: string; value: number | null;
+  id?: string; type: 'RIFA' | 'VENTA' | 'PASADO'; past?: PastDraw; frame?: string; frameOptions?: { name: string; extra: number }[]; title: string; artist: string; technique: string; size: string; value: number | null;
   description: string; price: number; totalTickets: number; endsAt: string; policy: string; photos: string[]; soldOrHeld: number;
 };
 
@@ -33,6 +33,10 @@ export default function ArtworkForm({ initial, techniques, frames }: { initial: 
   const [tickets, setTickets] = useState(initial.totalTickets), [tprice, setTprice] = useState(initial.price), [value, setValue] = useState(initial.value ?? 0);
   const [photos, setPhotos] = useState<Photo[]>(initial.photos.map((u) => ({ key: u, src: u, token: `url:${u}` })));
   const [busy, setBusy] = useState(false);
+  const [frameOpts, setFrameOpts] = useState<{ k: number; name: string; extra: string }[]>(
+    (initial.frameOptions ?? []).map((o, k) => ({ k, name: o.name, extra: o.extra ? String(o.extra) : '' })));
+  const addFrame = () => setFrameOpts((f) => [...f, { k: Date.now(), name: '', extra: '' }]);
+  const setFrame = (k: number, patch: Partial<{ name: string; extra: string }>) => setFrameOpts((f) => f.map((o) => (o.k === k ? { ...o, ...patch } : o)));
   const fileInput = useRef<HTMLInputElement>(null);
   const editing = !!initial.id, locked = initial.soldOrHeld > 0;
 
@@ -81,10 +85,12 @@ export default function ArtworkForm({ initial, techniques, frames }: { initial: 
             <input name="technique" list="techniques" defaultValue={initial.technique} placeholder="Elige o escribe uno nuevo" maxLength={60} />
             <datalist id="techniques">{techniques.map((t) => <option key={t} value={t} />)}</datalist>
           </label>
-          <label>Tipo de marco (opcional)
-            <input name="frame" list="frames" defaultValue={initial.frame ?? ''} placeholder="Elige o escribe uno nuevo" maxLength={60} />
-            <datalist id="frames">{frames.map((t) => <option key={t} value={t} />)}</datalist>
-          </label>
+          {type !== 'VENTA' && (
+            <label>Tipo de marco (opcional)
+              <input name="frame" list="frames" defaultValue={initial.frame ?? ''} placeholder="Elige o escribe uno nuevo" maxLength={60} />
+            </label>
+          )}
+          <datalist id="frames">{frames.map((t) => <option key={t} value={t} />)}</datalist>
           <label>Medidas (opcional)<input name="size" defaultValue={initial.size} placeholder="Ej: 60 × 80 cm" /></label>
           <label>Valor referencial (opcional, CLP)<input name="value" inputMode="numeric" defaultValue={initial.value ?? ''} onChange={(e) => setValue(+e.target.value.replace(/\D/g, '') || 0)} placeholder="Ej: 350000" /></label>
           <label className="full">Descripción (opcional)<textarea name="description" defaultValue={initial.description} placeholder="Cuenta algo de la obra o del artista" /></label>
@@ -132,7 +138,23 @@ export default function ArtworkForm({ initial, techniques, frames }: { initial: 
             <div className="full calc"><span>Recaudación al completar: <b>{CLP(tickets * tprice)}</b></span>{value > 0 && <span>{tickets * tprice >= value ? 'Cubre' : 'No cubre'} el valor referencial ({Math.round((tickets * tprice) / value * 100)}%)</span>}</div>
           </div>
         ) : (
-          <div className="form"><label>Precio de venta (CLP) *<input name="price" inputMode="numeric" defaultValue={initial.price} /></label></div>
+          <div className="form">
+            <label>Precio de venta (CLP) *<input name="price" inputMode="numeric" defaultValue={initial.price} /></label>
+            <div className="full field">Marcos que puede elegir el comprador (opcional)
+              <span className="hint">Si agregas opciones, el comprador elige una al pagar y su precio adicional se suma al total. Pon $0 en la que va incluida. Si no agregas ninguna, no se pregunta.</span>
+              <input type="hidden" name="frameOptions" value={JSON.stringify(frameOpts.map((o) => ({ name: o.name, extra: +o.extra.replace(/\D/g, '') || 0 })))} />
+              <div className="frame-rows">
+                {frameOpts.map((o) => (
+                  <div className="frame-row" key={o.k}>
+                    <input list="frames" value={o.name} onChange={(e) => setFrame(o.k, { name: e.target.value })} placeholder="Ej: Marco de madera natural" maxLength={60} aria-label="Nombre del marco" />
+                    <input inputMode="numeric" value={o.extra} onChange={(e) => setFrame(o.k, { extra: e.target.value })} placeholder="+ $0" aria-label="Precio adicional del marco" />
+                    <button type="button" className="btn btn-line btn-sm" onClick={() => setFrameOpts((f) => f.filter((x) => x.k !== o.k))}>Quitar</button>
+                  </div>
+                ))}
+                {frameOpts.length < 10 && <button type="button" className="btn btn-line btn-sm" style={{ alignSelf: 'flex-start' }} onClick={addFrame}>+ Agregar opción de marco</button>}
+              </div>
+            </div>
+          </div>
         )}
         <p className="err" role="alert">{state.error}</p>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>

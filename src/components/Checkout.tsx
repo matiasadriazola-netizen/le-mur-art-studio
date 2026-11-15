@@ -96,17 +96,36 @@ export function TicketPicker({ artworkId, total, price, sold, held, closed }: {
   );
 }
 
-export function SaleCheckout({ artworkId, price }: { artworkId: string; price: number }) {
+export type FrameChoice = { id: string; name: string; extra: number };
+
+export function SaleCheckout({ artworkId, price, frames = [] }: { artworkId: string; price: number; frames?: FrameChoice[] }) {
   const [err, setErr] = useState(''); const [busy, setBusy] = useState(false);
+  const [frameId, setFrameId] = useState(frames[0]?.id ?? '');
+  const frame = frames.find((f) => f.id === frameId);
+  const total = price + (frame?.extra ?? 0);
   async function submit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault(); setErr(''); setBusy(true);
-    try { await startCheckout({ artworkId, ...Object.fromEntries(new FormData(e.currentTarget)) }); } catch (x) { setErr((x as Error).message); setBusy(false); }
+    e.preventDefault(); setErr('');
+    if (frames.length && !frame) return setErr('Elige un tipo de marco.');
+    setBusy(true);
+    try { await startCheckout({ artworkId, frameOptionId: frameId || undefined, ...Object.fromEntries(new FormData(e.currentTarget)) }); } catch (x) { setErr((x as Error).message); setBusy(false); }
   }
   return (
     <form className="form" onSubmit={submit} noValidate>
+      {frames.length > 0 && (
+        <fieldset className="full frame-pick" style={{ border: 0, padding: 0, margin: 0 }}>
+          <legend className="lbl" style={{ marginBottom: 8 }}>Elige el marco</legend>
+          {frames.map((f) => (
+            <label key={f.id}>
+              <input type="radio" name="frameChoice" value={f.id} checked={frameId === f.id} onChange={() => setFrameId(f.id)} />
+              {f.name}
+              <span className="x">{f.extra ? `+ ${CLP(f.extra)}` : 'Incluido'}</span>
+            </label>
+          ))}
+        </fieldset>
+      )}
       <BuyerFields comuna />
-      <div className="full total"><div><div className="lbl">Total</div><div className="sum">{CLP(price)}</div></div>
-        <button className="btn btn-brand" type="submit" disabled={busy}>{busy ? 'Conectando con Webpay…' : `Comprar por ${CLP(price)}`}</button></div>
+      <div className="full total"><div><div className="lbl">Total{frame ? ` · ${frame.name}` : ''}</div><div className="sum">{CLP(total)}</div></div>
+        <button className="btn btn-brand" type="submit" disabled={busy}>{busy ? 'Conectando con Webpay…' : `Comprar por ${CLP(total)}`}</button></div>
       <p className="err full" role="alert">{err}</p>
       <div className="full">{SECURE}</div>
     </form>

@@ -18,7 +18,7 @@ export default async function Pagos({ searchParams }: { searchParams: Promise<{ 
         {[['all', 'Todos'], ['paid', 'Pagados'], ['refund', 'Por reembolsar']].map(([k, l]) => <a key={k} className="chip" aria-pressed={f === k} href={`/admin/pagos?f=${k}`} style={{ textDecoration: 'none' }}>{l}</a>)}
       </div>
       <div className="tbl-wrap"><table className="tbl">
-        <thead><tr><th>Fecha</th><th>Orden</th><th>Comprador</th><th>Obra</th><th>Tickets</th><th>Monto</th><th>Estado</th><th style={{ textAlign: 'right' }}>Acción</th></tr></thead>
+        <thead><tr><th>Fecha</th><th>Orden</th><th>Comprador</th><th>Obra</th><th>Detalle</th><th>Monto</th><th>Estado</th><th style={{ textAlign: 'right' }}>Acción</th></tr></thead>
         <tbody>
           {orders.length ? orders.map((o) => {
             const [cls, label] = LABEL[o.status] ?? ['open', o.status];
@@ -28,7 +28,7 @@ export default async function Pagos({ searchParams }: { searchParams: Promise<{ 
                 <td className="mono" style={{ fontSize: 12 }}>{o.buyOrder}{o.authCode && <div className="muted">aut. {o.authCode}</div>}</td>
                 <td>{o.firstName} {o.lastName}<div className="muted" style={{ fontSize: 12 }}>{o.email}{o.comuna ? ` · ${o.comuna}` : ''}</div></td>
                 <td>{o.artwork.title}</td>
-                <td className="mono" style={{ fontSize: 12 }}>{o.numbers ? o.numbers.split(',').map((n) => '#' + n).join(' ') : '—'}</td>
+                <td className="mono" style={{ fontSize: 12 }}>{o.numbers ? o.numbers.split(',').map((n) => '#' + n).join(' ') : o.frameName ? <span style={{ fontFamily: 'var(--f-sans)' }}>Marco: {o.frameName}</span> : '—'}</td>
                 <td className="mono">{CLP(o.amount)}</td>
                 <td><span className={`pill ${cls}`}>{label}</span>{o.note && <div className="muted" style={{ fontSize: 12, marginTop: 4, maxWidth: 240 }}>{o.note}</div>}</td>
                 <td><div className="acts">{o.status === 'REFUND_PENDING' && <ConfirmAction action={refundOrder} id={o.id} label="Reembolsar por Webpay" confirm={`¿Devolver ${CLP(o.amount)}?`} />}</div></td>
