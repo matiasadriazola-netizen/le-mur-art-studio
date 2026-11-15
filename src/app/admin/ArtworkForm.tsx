@@ -5,7 +5,7 @@ import { CLP } from '@/lib/format';
 
 export type PastDraw = { winnerName: string; winnerNumber: number | ''; ticketsSold: number | ''; drawAt: string; proofUrl: string };
 export type ArtworkInput = {
-  id?: string; type: 'RIFA' | 'VENTA' | 'PASADO'; past?: PastDraw; title: string; artist: string; technique: string; size: string; value: number | null;
+  id?: string; type: 'RIFA' | 'VENTA' | 'PASADO'; past?: PastDraw; frame?: string; title: string; artist: string; technique: string; size: string; value: number | null;
   description: string; price: number; totalTickets: number; endsAt: string; policy: string; photos: string[]; soldOrHeld: number;
 };
 
@@ -27,7 +27,7 @@ async function shrink(file: File): Promise<File> {
   } catch { return file; }
 }
 
-export default function ArtworkForm({ initial, techniques }: { initial: ArtworkInput; techniques: string[] }) {
+export default function ArtworkForm({ initial, techniques, frames }: { initial: ArtworkInput; techniques: string[]; frames: string[] }) {
   const [state, action, pending] = useActionState<FormState, FormData>(saveArtwork, {});
   const [type, setType] = useState(initial.type);
   const [tickets, setTickets] = useState(initial.totalTickets), [tprice, setTprice] = useState(initial.price), [value, setValue] = useState(initial.value ?? 0);
@@ -80,6 +80,10 @@ export default function ArtworkForm({ initial, techniques }: { initial: ArtworkI
           <label>Tipo de cuadro (opcional)
             <input name="technique" list="techniques" defaultValue={initial.technique} placeholder="Elige o escribe uno nuevo" maxLength={60} />
             <datalist id="techniques">{techniques.map((t) => <option key={t} value={t} />)}</datalist>
+          </label>
+          <label>Tipo de marco (opcional)
+            <input name="frame" list="frames" defaultValue={initial.frame ?? ''} placeholder="Elige o escribe uno nuevo" maxLength={60} />
+            <datalist id="frames">{frames.map((t) => <option key={t} value={t} />)}</datalist>
           </label>
           <label>Medidas (opcional)<input name="size" defaultValue={initial.size} placeholder="Ej: 60 × 80 cm" /></label>
           <label>Valor referencial (opcional, CLP)<input name="value" inputMode="numeric" defaultValue={initial.value ?? ''} onChange={(e) => setValue(+e.target.value.replace(/\D/g, '') || 0)} placeholder="Ej: 350000" /></label>

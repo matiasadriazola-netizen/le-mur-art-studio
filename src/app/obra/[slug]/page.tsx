@@ -29,7 +29,7 @@ export default async function ObraPage({ params }: { params: Promise<{ slug: str
 
   const specs = (
     <dl className="specs">
-      {a.artist && <><dt>Artista</dt><dd>{a.artist}</dd></>}{a.technique && <><dt>Tipo</dt><dd>{a.technique}</dd></>}{a.size && <><dt>Medidas</dt><dd>{a.size}</dd></>}
+      {a.artist && <><dt>Artista</dt><dd>{a.artist}</dd></>}{a.technique && <><dt>Tipo</dt><dd>{a.technique}</dd></>}{a.size && <><dt>Medidas</dt><dd>{a.size}</dd></>}{a.frame && <><dt>Marco</dt><dd>{a.frame}</dd></>}
       {a.value ? <><dt>Valor referencial</dt><dd className="mono">{CLP(a.value)}</dd></> : null}
       <dt>Certificado</dt><dd>Firmado por el artista</dd>
       <dt>Publicado</dt><dd>{a.createdAt.toLocaleDateString('es-CL', { dateStyle: 'long' })}</dd>

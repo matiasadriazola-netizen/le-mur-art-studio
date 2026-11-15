@@ -47,7 +47,7 @@ export async function saveArtwork(_: FormState, fd: FormData): Promise<FormState
   if (existing && existing.status !== 'OPEN' && !past) return { error: 'Esta obra ya está cerrada y no se puede editar.' };
 
   const base = {
-    title, artist: str(fd.get('artist'), 80), size: str(fd.get('size'), 40), technique: str(fd.get('technique'), 60),
+    title, artist: str(fd.get('artist'), 80), size: str(fd.get('size'), 40), technique: str(fd.get('technique'), 60), frame: str(fd.get('frame'), 60),
     value: int(fd.get('value')) || null, description: str(fd.get('description'), 1200) || null,
   };
 

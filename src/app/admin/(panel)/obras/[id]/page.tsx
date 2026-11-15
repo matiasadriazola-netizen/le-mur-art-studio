@@ -7,7 +7,7 @@ import Participants from '@/components/Participants';
 import ArtworkForm from '../../../ArtworkForm';
 import { cancelNow, drawNow } from '../../../actions';
 import ConfirmAction from '@/components/ConfirmAction';
-import { techniqueOptions } from '@/lib/techniques';
+import { frameOptions, techniqueOptions } from '@/lib/techniques';
 
 export default async function EditObra({ params }: { params: Promise<{ id: string }> }) {
   const a = await prisma.artwork.findUnique({ where: { id: (await params).id }, include: { draw: true, images: { orderBy: { position: 'asc' } } } });
@@ -19,10 +19,10 @@ export default async function EditObra({ params }: { params: Promise<{ id: strin
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
       {a.draw?.external ? (
-        <ArtworkForm techniques={await techniqueOptions()} initial={{ id: a.id, type: 'PASADO', title: a.title, artist: a.artist, technique: a.technique, size: a.size, value: a.value, description: a.description ?? '', price: a.price, totalTickets: a.totalTickets ?? 1, endsAt: '', policy: 'DRAW', photos: a.images.length ? a.images.map((i) => i.url) : a.imageUrl ? [a.imageUrl] : [], soldOrHeld: 0,
+        <ArtworkForm techniques={await techniqueOptions()} frames={await frameOptions()} initial={{ id: a.id, frame: a.frame, type: 'PASADO', title: a.title, artist: a.artist, technique: a.technique, size: a.size, value: a.value, description: a.description ?? '', price: a.price, totalTickets: a.totalTickets ?? 1, endsAt: '', policy: 'DRAW', photos: a.images.length ? a.images.map((i) => i.url) : a.imageUrl ? [a.imageUrl] : [], soldOrHeld: 0,
           past: { winnerName: a.draw.winnerName, winnerNumber: a.draw.winnerNumber, ticketsSold: a.draw.ticketsSold === (a.totalTickets ?? 0) ? '' : a.draw.ticketsSold, drawAt: toChileInput(a.draw.createdAt), proofUrl: a.draw.proofUrl ?? '' } }} />
       ) : a.status === 'OPEN' ? (
-        <ArtworkForm techniques={await techniqueOptions()} initial={{ id: a.id, type: a.type as 'RIFA' | 'VENTA', title: a.title, artist: a.artist, technique: a.technique, size: a.size, value: a.value, description: a.description ?? '', price: a.price, totalTickets: a.totalTickets ?? 20, endsAt: a.endsAt ? toChileInput(a.endsAt) : '', policy: a.policy ?? 'DRAW', photos: a.images.length ? a.images.map((i) => i.url) : a.imageUrl ? [a.imageUrl] : [], soldOrHeld: held }} />
+        <ArtworkForm techniques={await techniqueOptions()} frames={await frameOptions()} initial={{ id: a.id, frame: a.frame, type: a.type as 'RIFA' | 'VENTA', title: a.title, artist: a.artist, technique: a.technique, size: a.size, value: a.value, description: a.description ?? '', price: a.price, totalTickets: a.totalTickets ?? 20, endsAt: a.endsAt ? toChileInput(a.endsAt) : '', policy: a.policy ?? 'DRAW', photos: a.images.length ? a.images.map((i) => i.url) : a.imageUrl ? [a.imageUrl] : [], soldOrHeld: held }} />
       ) : (
         <div className="panel" style={{ padding: 24 }}><h2 style={{ fontSize: 26 }}>{a.title}</h2><p className="muted">{meta(a.artist, a.size, CLP(a.price) + (a.type === 'RIFA' ? ' por ticket' : ''))}</p>
           {a.draw && <p style={{ marginTop: 10 }}>Ganó <b>{a.draw.winnerName}</b> con el ticket #{a.draw.winnerNumber} · {fmtLong(a.draw.createdAt)} · código {a.draw.code} · <Link href={`/verificar/${a.slug}`}>verificación</Link></p>}

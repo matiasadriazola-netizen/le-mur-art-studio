@@ -18,6 +18,7 @@ model Artwork {
   artist      String   @default("")
   technique   String   @default("") // tipo de cuadro; texto libre
   size        String   @default("")
+  frame       String   @default("") // tipo de marco; texto libre
   value       Int? // valor referencial (CLP)
   description String?
   imageUrl    String? // foto principal (la primera de la galería)
