@@ -1,0 +1,104 @@
+// Le Mur Art Studio — modelo de datos
+// En desarrollo usa SQLite. Para producción cambia provider a "postgresql".
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Artwork {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  type        String // RIFA | VENTA
+  title       String
+  artist      String
+  technique   String
+  size        String
+  value       Int? // valor referencial (CLP)
+  description String?
+  imageUrl    String?
+  price       Int // precio por ticket (RIFA) o precio único (VENTA)
+  status      String   @default("OPEN") // OPEN | DRAWN | CANCELLED | SOLD
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Solo sorteos
+  totalTickets Int?
+  endsAt       DateTime?
+  policy       String? // DRAW | EXTEND | CANCEL  (qué hacer si no se completa a tiempo)
+  seed         String? // secreto hasta el sorteo; se publica después para verificar
+  seedHash     String? // sha256(seed), público desde que se publica la obra
+
+  // Solo venta directa: reserva mientras alguien paga
+  reservedUntil   DateTime?
+  reservedOrderId String?
+
+  tickets Ticket[]
+  orders  Order[]
+  draw    Draw?
+}
+
+model Order {
+  id         String    @id @default(cuid())
+  artworkId  String
+  artwork    Artwork   @relation(fields: [artworkId], references: [id], onDelete: Restrict)
+  firstName  String
+  lastName   String
+  email      String
+  comuna     String?
+  numbers    String    @default("") // tickets pedidos, separados por coma
+  amount     Int
+  // PENDING | PAID | REJECTED | ABORTED | EXPIRED | REFUND_PENDING | REFUNDED
+  status     String    @default("PENDING")
+  buyOrder   String    @unique
+  token      String?   @unique
+  authCode   String?
+  cardLast4  String?
+  createdAt  DateTime  @default(now())
+  paidAt     DateTime?
+  note       String?
+
+  tickets Ticket[]
+}
+
+model Ticket {
+  id        String  @id @default(cuid())
+  artworkId String
+  artwork   Artwork @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+  number    Int
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([artworkId, number])
+}
+
+model Draw {
+  id           String   @id @default(cuid())
+  artworkId    String   @unique
+  artwork      Artwork  @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+  winnerNumber Int
+  winnerName   String
+  orderId      String
+  ticketsSold  Int
+  partial      Boolean  @default(false) // true si se sorteó al vencer el plazo sin completar
+  ticketList   String // "numero:orden" ordenados, lo que entró al cálculo
+  digest       String // sha256(seed|ticketList)
+  code         String // código corto para publicar
+  createdAt    DateTime @default(now())
+}
+
+model SiteSettings {
+  id        Int      @id @default(1)
+  name      String   @default("Le Mur Art Studio")
+  logoUrl   String?  @default("/brand/logo-le-mur.png")
+  heroUrl   String?
+  showUrl   String?
+  title     String   @default("Arte original,")
+  highlight String   @default("desde $2.000.")
+  lead      String   @default("Compra el cuadro a su precio, o participa con tickets en su sorteo. Cuando se vende el último número, el sistema elige al ganador y lo publica con un código verificable.")
+  updatedAt DateTime @updatedAt
+}
