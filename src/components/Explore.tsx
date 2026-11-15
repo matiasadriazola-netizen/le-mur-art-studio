@@ -11,12 +11,18 @@ const FILTERS = {
 export default function Explore({ items }: { items: CardItem[] }) {
   const [mode, setMode] = useState<'RIFA' | 'VENTA'>('RIFA');
   const [filter, setFilter] = useState('all');
+  const [cat, setCat] = useState<string | null>(null);
   useEffect(() => {
+    const q = new URLSearchParams(location.search).get('categoria');
+    if (q) setCat(q);
     const sync = () => { if (location.hash === '#venta') { setMode('VENTA'); setFilter('all'); } if (location.hash === '#sorteos') { setMode('RIFA'); setFilter('all'); } };
     sync(); window.addEventListener('hashchange', sync); return () => window.removeEventListener('hashchange', sync);
   }, []);
   const now = Date.now();
-  const list = items.filter((a) => a.type === mode).filter((a) => {
+  const inMode = items.filter((a) => a.type === mode);
+  const cats = [...new Map(inMode.flatMap((a) => a.categories).map((c) => [c.slug, c])).values()].sort((a, b) => a.name.localeCompare(b.name, 'es'));
+  const activeCat = cat && cats.some((c) => c.slug === cat) ? cat : null;
+  const list = inMode.filter((a) => !activeCat || a.categories.some((c) => c.slug === activeCat)).filter((a) => {
     if (filter === 'all') return true;
     if (mode === 'VENTA') return filter === 'sold' ? a.status === 'SOLD' : a.status === 'OPEN';
     if (filter === 'done') return a.status === 'DRAWN';
@@ -42,6 +48,13 @@ export default function Explore({ items }: { items: CardItem[] }) {
           {FILTERS[mode].map(([k, l]) => <button key={k} className="chip" aria-pressed={filter === k} onClick={() => setFilter(k)}>{l}</button>)}
         </div>
       </div>
+      {cats.length > 0 && (
+        <div className="chips cats" role="group" aria-label="Filtrar por categoría" style={{ marginBottom: 22 }}>
+          <span className="muted" style={{ fontSize: 13, alignSelf: 'center', marginRight: 4 }}>Categoría:</span>
+          <button className="chip" aria-pressed={!activeCat} onClick={() => setCat(null)}>Todas</button>
+          {cats.map((c) => <button key={c.slug} className="chip" aria-pressed={activeCat === c.slug} onClick={() => setCat(activeCat === c.slug ? null : c.slug)}>{c.name}</button>)}
+        </div>
+      )}
       <div className="grid">
         {list.length ? list.map((a) => <ArtCard key={a.id} a={a} />) : <div className="empty">No hay obras en este filtro.</div>}
       </div>

@@ -6,12 +6,13 @@ export type CardItem = {
   price: number; value: number | null; imageUrl: string | null; status: string; createdAt: string;
   totalTickets: number | null; sold: number; endsAt: string | null;
   winnerName: string | null; winnerNumber: number | null; drawCode: string | null; drawAt: string | null; drawSold: number | null; drawExternal: boolean; drawProof: string | null;
+  categories: { name: string; slug: string }[];
 };
 
 export async function catalog(): Promise<CardItem[]> {
   await housekeeping();
   const [arts, counts] = await Promise.all([
-    prisma.artwork.findMany({ include: { draw: true }, orderBy: { createdAt: 'desc' } }),
+    prisma.artwork.findMany({ include: { draw: true, categories: { select: { name: true, slug: true }, orderBy: { name: 'asc' } } }, orderBy: { createdAt: 'desc' } }),
     soldCounts(),
   ]);
   return arts.map((a) => ({
@@ -21,6 +22,7 @@ export async function catalog(): Promise<CardItem[]> {
     winnerName: a.draw?.winnerName ?? null, winnerNumber: a.draw?.winnerNumber ?? null, drawCode: a.draw?.code ?? null,
     drawAt: a.draw?.createdAt.toISOString() ?? null, drawSold: a.draw?.ticketsSold ?? null,
     drawExternal: !!a.draw?.external, drawProof: a.draw?.proofUrl ?? null,
+    categories: a.categories,
   }));
 }
 

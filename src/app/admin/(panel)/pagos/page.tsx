@@ -26,7 +26,7 @@ export default async function Pagos({ searchParams }: { searchParams: Promise<{ 
               <tr key={o.id}>
                 <td style={{ fontSize: 13 }}>{fmtWhen(o.createdAt)}</td>
                 <td className="mono" style={{ fontSize: 12 }}>{o.buyOrder}{o.authCode && <div className="muted">aut. {o.authCode}</div>}</td>
-                <td>{o.firstName} {o.lastName}<div className="muted" style={{ fontSize: 12 }}>{o.email}{o.comuna ? ` · ${o.comuna}` : ''}</div></td>
+                <td>{o.firstName} {o.lastName}<div className="muted" style={{ fontSize: 12 }}>{o.email}{o.phone ? ` · ${o.phone}` : ''}</div>{(o.address || o.comuna) && <div className="muted" style={{ fontSize: 12 }}>Envío: {[o.address, o.comuna].filter(Boolean).join(', ')}</div>}</td>
                 <td>{o.artwork.title}</td>
                 <td className="mono" style={{ fontSize: 12 }}>{o.numbers ? o.numbers.split(',').map((n) => '#' + n).join(' ') : o.frameName ? <span style={{ fontFamily: 'var(--f-sans)' }}>Marco: {o.frameName}</span> : '—'}</td>
                 <td className="mono">{CLP(o.amount)}</td>

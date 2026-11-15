@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ObraPage({ params }: { params: Promise<{ slug: string }> }) {
   await housekeeping();
-  const a = await prisma.artwork.findUnique({ where: { slug: (await params).slug }, include: { draw: true, images: { orderBy: { position: 'asc' } }, frameOptions: { orderBy: { position: 'asc' } } } });
+  const a = await prisma.artwork.findUnique({ where: { slug: (await params).slug }, include: { draw: true, images: { orderBy: { position: 'asc' } }, frameOptions: { orderBy: { position: 'asc' } }, categories: { orderBy: { name: 'asc' } } } });
   if (!a) notFound();
   const photos = a.images.length ? a.images.map((i) => i.url) : a.imageUrl ? [a.imageUrl] : [];
 
@@ -31,6 +31,7 @@ export default async function ObraPage({ params }: { params: Promise<{ slug: str
     <dl className="specs">
       {a.artist && <><dt>Artista</dt><dd>{a.artist}</dd></>}{a.technique && <><dt>Tipo</dt><dd>{a.technique}</dd></>}{a.size && <><dt>Medidas</dt><dd>{a.size}</dd></>}{a.frame && <><dt>Marco</dt><dd>{a.frame}</dd></>}
       {a.value ? <><dt>Valor referencial</dt><dd className="mono">{CLP(a.value)}</dd></> : null}
+      {a.categories.length > 0 && <><dt>Categorías</dt><dd>{a.categories.map((c, i) => <span key={c.id}>{i > 0 && ', '}<Link href={`/?categoria=${c.slug}#explorar`}>{c.name}</Link></span>)}</dd></>}
       <dt>Certificado</dt><dd>Firmado por el artista</dd>
       <dt>Publicado</dt><dd>{a.createdAt.toLocaleDateString('es-CL', { dateStyle: 'long' })}</dd>
     </dl>

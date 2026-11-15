@@ -17,11 +17,11 @@ export default async function CompraPage({ params }: { params: Promise<{ id: str
       tone = 'ok';
       title = a.type === 'VENTA' ? '¡La obra es tuya!' : '¡Tus tickets están confirmados!';
       body = a.type === 'VENTA'
-        ? <p>Pagaste {CLP(o.amount)} por “{a.title}”. Te escribiremos a {o.email} para coordinar el despacho a {o.comuna}.</p>
+        ? <p>Pagaste {CLP(o.amount)} por “{a.title}”. Te contactaremos al {o.phone ?? o.email} para coordinar el despacho a {[o.address, o.comuna].filter(Boolean).join(', ')}.</p>
         : <p>Compraste {nums.length} ticket{nums.length > 1 ? 's' : ''} para “{a.title}”: {nums.map((n) => <span key={n} className="tnum" style={{ marginRight: 4 }}>#{pad(n)}</span>)}. Te avisaremos a {o.email} cuando se haga el sorteo.</p>;
       break;
     case 'PENDING': title = 'Estamos confirmando tu pago'; body = <p>Recarga esta página en unos segundos.</p>; break;
-    case 'ABORTED': title = 'Anulaste el pago'; body = <p>No se hizo ningún cargo y los números quedaron libres. Puedes intentarlo de nuevo.</p>; break;
+    case 'ABORTED': title = 'Anulaste el pago'; body = <p>No se hizo ningún cargo y {a.type === 'VENTA' ? 'la obra volvió a estar disponible' : 'los números quedaron libres'}. Puedes intentarlo de nuevo.</p>; break;
     case 'EXPIRED': title = 'Se agotó el tiempo para pagar'; body = <p>No se hizo ningún cargo. Vuelve a la obra para intentarlo de nuevo.</p>; break;
     case 'REJECTED': title = 'El pago no se completó'; body = <p>Webpay rechazó el pago o no pudo confirmarse. No se hizo ningún cargo. Puedes intentarlo con otra tarjeta.</p>; break;
     case 'REFUND_PENDING': case 'REFUNDED':

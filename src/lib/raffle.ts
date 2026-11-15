@@ -143,15 +143,21 @@ export async function cancelRaffle(artworkId: string, reason: string) {
 /* Compra                                                              */
 /* ------------------------------------------------------------------ */
 
-export type Buyer = { firstName: string; lastName: string; email: string; comuna?: string };
+export type Buyer = { firstName: string; lastName: string; email: string; phone?: string; address?: string; comuna?: string };
 
-export function validateBuyer(b: Partial<Buyer>, needsComuna: boolean): Buyer {
-  const firstName = (b.firstName ?? '').trim().slice(0, 40), lastName = (b.lastName ?? '').trim().slice(0, 40);
-  const email = (b.email ?? '').trim().toLowerCase().slice(0, 120), comuna = (b.comuna ?? '').trim().slice(0, 60);
+/** Valida los datos del comprador. En venta directa también se piden teléfono, dirección y comuna para el envío. */
+export function validateBuyer(b: Partial<Buyer>, needsShipping: boolean): Buyer {
+  const t = (v: unknown, max: number) => String(v ?? '').trim().slice(0, max);
+  const firstName = t(b.firstName, 40), lastName = t(b.lastName, 40), email = t(b.email, 120).toLowerCase();
   if (!firstName || !lastName) throw new UserError('Escribe tu nombre y apellido.');
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new UserError('Revisa el correo; ahí te llega la confirmación.');
-  if (needsComuna && !comuna) throw new UserError('Indica la comuna para coordinar el despacho.');
-  return { firstName, lastName, email, comuna: comuna || undefined };
+  if (!needsShipping) return { firstName, lastName, email };
+  const phone = t(b.phone, 20), address = t(b.address, 160), comuna = t(b.comuna, 60);
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length < 8 || digits.length > 12) throw new UserError('Revisa el teléfono, por ejemplo +56 9 1234 5678.');
+  if (address.length < 5) throw new UserError('Escribe la dirección de envío (calle, número y depto si corresponde).');
+  if (!comuna) throw new UserError('Indica la comuna para coordinar el despacho.');
+  return { firstName, lastName, email, phone, address, comuna };
 }
 
 /** Crea la orden y reserva los números (sorteo) o la obra (venta directa) antes de ir a Webpay. */
@@ -240,7 +246,7 @@ export async function settleOrder(orderId: string, c: Commit) {
   const a = order.artwork;
   if (a.type === 'VENTA') {
     await prisma.artwork.update({ where: { id: a.id }, data: { status: 'SOLD', reservedOrderId: null, reservedUntil: null } });
-    await sendMail(order.email, `Compraste "${a.title}"`, `Pagaste ${CLP(order.amount)} por "${a.title}"${deArtist(a.artist)}${order.frameName ? `, con ${order.frameName}` : ''}. Te contactaremos para coordinar el despacho a ${order.comuna ?? 'tu comuna'}.`);
+    await sendMail(order.email, `Compraste "${a.title}"`, `Pagaste ${CLP(order.amount)} por "${a.title}"${deArtist(a.artist)}${order.frameName ? `, con ${order.frameName}` : ''}. Te contactaremos al ${order.phone ?? 'teléfono que indicaste'} para coordinar el despacho a ${[order.address, order.comuna].filter(Boolean).join(', ') || 'tu dirección'}.`);
   } else {
     await sendMail(order.email, `Tus tickets para "${a.title}"`,
       `Compraste los tickets ${order.numbers.split(',').map((n) => '#' + n).join(', ')} por ${CLP(order.amount)}.\nEl sorteo se hace al venderse el último ticket${a.endsAt ? ` o el ${fmtLong(a.endsAt)}` : ''}.`);

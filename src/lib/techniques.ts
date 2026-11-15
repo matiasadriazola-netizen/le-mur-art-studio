@@ -11,6 +11,11 @@ export async function frameOptions() {
   return [...new Set([...FRAMES, ...used.map((u) => u.frame)])].sort((a, b) => a.localeCompare(b, 'es'));
 }
 
+/** Categorías existentes, ordenadas por nombre. */
+export async function categoryOptions() {
+  return (await prisma.category.findMany({ orderBy: { name: 'asc' } })).map((c) => c.name);
+}
+
 export async function techniqueOptions() {
   const used = await prisma.artwork.findMany({ where: { technique: { not: '' } }, select: { technique: true }, distinct: ['technique'] });
   return [...new Set([...DEFAULTS, ...used.map((u) => u.technique)])].sort((a, b) => a.localeCompare(b, 'es'));

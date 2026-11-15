@@ -5,7 +5,7 @@ import { CLP } from '@/lib/format';
 
 export type PastDraw = { winnerName: string; winnerNumber: number | ''; ticketsSold: number | ''; drawAt: string; proofUrl: string };
 export type ArtworkInput = {
-  id?: string; type: 'RIFA' | 'VENTA' | 'PASADO'; past?: PastDraw; frame?: string; frameOptions?: { name: string; extra: number }[]; title: string; artist: string; technique: string; size: string; value: number | null;
+  id?: string; type: 'RIFA' | 'VENTA' | 'PASADO'; past?: PastDraw; frame?: string; frameOptions?: { name: string; extra: number }[]; categories?: string[]; title: string; artist: string; technique: string; size: string; value: number | null;
   description: string; price: number; totalTickets: number; endsAt: string; policy: string; photos: string[]; soldOrHeld: number;
 };
 
@@ -27,12 +27,22 @@ async function shrink(file: File): Promise<File> {
   } catch { return file; }
 }
 
-export default function ArtworkForm({ initial, techniques, frames }: { initial: ArtworkInput; techniques: string[]; frames: string[] }) {
+export default function ArtworkForm({ initial, techniques, frames, categories = [] }: { initial: ArtworkInput; techniques: string[]; frames: string[]; categories?: string[] }) {
   const [state, action, pending] = useActionState<FormState, FormData>(saveArtwork, {});
   const [type, setType] = useState(initial.type);
   const [tickets, setTickets] = useState(initial.totalTickets), [tprice, setTprice] = useState(initial.price), [value, setValue] = useState(initial.value ?? 0);
   const [photos, setPhotos] = useState<Photo[]>(initial.photos.map((u) => ({ key: u, src: u, token: `url:${u}` })));
   const [busy, setBusy] = useState(false);
+  const [cats, setCats] = useState<string[]>(initial.categories ?? []);
+  const [catList, setCatList] = useState<string[]>(categories);
+  const [newCat, setNewCat] = useState('');
+  const toggleCat = (c: string) => setCats((s) => (s.includes(c) ? s.filter((x) => x !== c) : [...s, c]));
+  const addCat = () => {
+    const n = newCat.trim().slice(0, 40); if (!n) return;
+    const known = catList.find((c) => c.toLowerCase() === n.toLowerCase()) ?? n;
+    if (!catList.includes(known)) setCatList((l) => [...l, known].sort((a, b) => a.localeCompare(b, 'es')));
+    setCats((s) => (s.includes(known) ? s : [...s, known])); setNewCat('');
+  };
   const [frameOpts, setFrameOpts] = useState<{ k: number; name: string; extra: string }[]>(
     (initial.frameOptions ?? []).map((o, k) => ({ k, name: o.name, extra: o.extra ? String(o.extra) : '' })));
   const addFrame = () => setFrameOpts((f) => [...f, { k: Date.now(), name: '', extra: '' }]);
@@ -93,6 +103,17 @@ export default function ArtworkForm({ initial, techniques, frames }: { initial: 
           <datalist id="frames">{frames.map((t) => <option key={t} value={t} />)}</datalist>
           <label>Medidas (opcional)<input name="size" defaultValue={initial.size} placeholder="Ej: 60 × 80 cm" /></label>
           <label>Valor referencial (opcional, CLP)<input name="value" inputMode="numeric" defaultValue={initial.value ?? ''} onChange={(e) => setValue(+e.target.value.replace(/\D/g, '') || 0)} placeholder="Ej: 350000" /></label>
+          <div className="full field">Categorías (opcional) <span className="hint">Ayudan a los visitantes a filtrar. Marca una o varias, o crea una nueva.</span>
+            <input type="hidden" name="categories" value={JSON.stringify(cats)} />
+            <div className="chips" style={{ marginTop: 6 }}>
+              {catList.map((c) => <button type="button" key={c} className="chip" aria-pressed={cats.includes(c)} onClick={() => toggleCat(c)}>{cats.includes(c) ? '✓ ' : ''}{c}</button>)}
+              {!catList.length && <span className="muted" style={{ fontSize: 13 }}>Todavía no hay categorías: crea la primera.</span>}
+            </div>
+            <div className="frame-row" style={{ gridTemplateColumns: '1fr auto', marginTop: 8 }}>
+              <input value={newCat} onChange={(e) => setNewCat(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCat(); } }} placeholder="Nueva categoría, ej: Paisaje" maxLength={40} aria-label="Nueva categoría" />
+              <button type="button" className="btn btn-line btn-sm" onClick={addCat}>+ Agregar</button>
+            </div>
+          </div>
           <label className="full">Descripción (opcional)<textarea name="description" defaultValue={initial.description} placeholder="Cuenta algo de la obra o del artista" /></label>
         </div>
 

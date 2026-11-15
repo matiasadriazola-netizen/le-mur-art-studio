@@ -43,6 +43,16 @@ model Artwork {
   draw    Draw?
   images  ArtworkImage[]
   frameOptions FrameOption[]
+  categories   Category[]
+}
+
+/// Categorías para filtrar obras (p. ej. Paisaje, Abstracto). Una obra puede tener varias.
+model Category {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  slug      String    @unique
+  createdAt DateTime  @default(now())
+  artworks  Artwork[]
 }
 
 /// Marcos que el comprador puede elegir en venta directa, con precio adicional
@@ -76,6 +86,8 @@ model Order {
   lastName   String
   email      String
   comuna     String?
+  phone      String?
+  address    String? // dirección de envío (venta directa)
   numbers    String    @default("") // tickets pedidos, separados por coma
   frameName  String? // marco elegido (venta directa)
   frameExtra Int       @default(0)

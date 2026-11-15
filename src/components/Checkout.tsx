@@ -20,13 +20,19 @@ async function startCheckout(payload: Record<string, unknown>) {
 
 const SECURE = <div className="secure"><Icon name="lock" size={16} />Pagas en Webpay de Transbank. No vemos ni guardamos los datos de tu tarjeta.</div>;
 
-function BuyerFields({ comuna }: { comuna?: boolean }) {
+function BuyerFields({ shipping }: { shipping?: boolean }) {
   return (
     <>
       <label>Nombre<input name="firstName" autoComplete="given-name" placeholder="Ej: Josefa" required /></label>
       <label>Apellido<input name="lastName" autoComplete="family-name" placeholder="Ej: Morales" required /></label>
-      <label className="full">Correo<input name="email" type="email" autoComplete="email" placeholder="tu@correo.cl" required /></label>
-      {comuna && <label className="full">Comuna de despacho<input name="comuna" autoComplete="address-level2" placeholder="Ej: Providencia" required /></label>}
+      <label className={shipping ? '' : 'full'}>Correo<input name="email" type="email" autoComplete="email" placeholder="tu@correo.cl" required /></label>
+      {shipping && (
+        <>
+          <label>Teléfono<input name="phone" type="tel" autoComplete="tel" inputMode="tel" placeholder="+56 9 1234 5678" required /></label>
+          <label className="full">Dirección de envío<input name="address" autoComplete="street-address" placeholder="Calle, número, depto o casa" required /></label>
+          <label className="full">Comuna<input name="comuna" autoComplete="address-level2" placeholder="Ej: Providencia" required /></label>
+        </>
+      )}
     </>
   );
 }
@@ -123,7 +129,7 @@ export function SaleCheckout({ artworkId, price, frames = [] }: { artworkId: str
           ))}
         </fieldset>
       )}
-      <BuyerFields comuna />
+      <BuyerFields shipping />
       <div className="full total"><div><div className="lbl">Total{frame ? ` · ${frame.name}` : ''}</div><div className="sum">{CLP(total)}</div></div>
         <button className="btn btn-brand" type="submit" disabled={busy}>{busy ? 'Conectando con Webpay…' : `Comprar por ${CLP(total)}`}</button></div>
       <p className="err full" role="alert">{err}</p>

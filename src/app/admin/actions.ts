@@ -26,6 +26,12 @@ export async function logout() {
 const int = (v: FormDataEntryValue | null) => { const n = parseInt(String(v ?? '').replace(/\D/g, ''), 10); return Number.isFinite(n) ? n : 0; };
 const str = (v: FormDataEntryValue | null, max = 200) => String(v ?? '').trim().slice(0, max);
 
+async function uniqueCatSlug(name: string) {
+  let slug = slugify(name), i = 2;
+  while (await prisma.category.findUnique({ where: { slug } })) slug = `${slugify(name)}-${i++}`;
+  return slug;
+}
+
 async function uniqueSlug(base: string, exceptId?: string) {
   let slug = slugify(base), i = 2;
   while (true) {
@@ -104,10 +110,22 @@ export async function saveArtwork(_: FormState, fd: FormData): Promise<FormState
     photos = [...new Set(photos)].slice(0, MAX_PHOTOS);
   } catch (e) { return { error: (e as Error).message || 'No se pudieron guardar las fotos.' }; }
 
+  // Categorías: llegan como lista de nombres; las nuevas se crean
+  let catNames: string[] = [];
+  try { catNames = (JSON.parse(str(fd.get('categories'), 4000) || '[]') as unknown[]).map((c) => String(c).trim().slice(0, 40)).filter(Boolean); } catch { /* sin categorías */ }
+  catNames = [...new Map(catNames.map((n) => [n.toLowerCase(), n])).values()].slice(0, 8);
+  const allCats = await prisma.category.findMany();
+  const cats: { id: string }[] = [];
+  for (const name of catNames) {
+    const found = allCats.find((c) => c.name.toLowerCase() === name.toLowerCase());
+    cats.push(found ?? (await prisma.category.create({ data: { name, slug: await uniqueCatSlug(name) } })));
+  }
+  const catIds = cats.map((c) => ({ id: c.id }));
+
   const data = { ...base, ...typed, imageUrl: photos[0] ?? null };
   const artworkId = existing
-    ? (await prisma.artwork.update({ where: { id: existing.id }, data })).id
-    : (await prisma.artwork.create({ data: { ...data, price, type, slug: await uniqueSlug(title), ...(type === 'RIFA' && !past ? newSeed() : {}) } })).id;
+    ? (await prisma.artwork.update({ where: { id: existing.id }, data: { ...data, categories: { set: catIds } } })).id
+    : (await prisma.artwork.create({ data: { ...data, categories: { connect: catIds }, price, type, slug: await uniqueSlug(title), ...(type === 'RIFA' && !past ? newSeed() : {}) } })).id;
   if (type === 'VENTA') {
     await prisma.$transaction([
       prisma.frameOption.deleteMany({ where: { artworkId } }),
