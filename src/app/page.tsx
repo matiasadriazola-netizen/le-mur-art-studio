@@ -60,12 +60,6 @@ export default async function Home() {
             {cheap && <Link className="floater" href={`/obra/${cheap.slug}`}><Img a={cheap} /><div><b>Venta directa</b><span>{cheap.title} · {CLP(cheap.price)}</span></div></Link>}
           </div>
         </div>
-        <div className="wrap hero-stats">
-          <div className="hstat"><b>{openR.length + openV.length}</b><span>obras disponibles</span></div>
-          <div className="hstat"><b>{ticketsSold}</b><span>tickets vendidos</span></div>
-          <div className="hstat"><b>{drawn.length}</b><span>ganadores publicados</span></div>
-          <div className="hstat"><b>100%</b><span>sorteos verificables</span></div>
-        </div>
       </div>
 
       <div className="wrap">

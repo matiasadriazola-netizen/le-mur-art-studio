@@ -458,3 +458,4 @@ a.ov,a.mini{color:var(--on-img)}
 .detail .art .thumbs img{aspect-ratio:auto;height:100%;border-radius:0;background:none}
 .fcols a.ig{display:inline-flex;align-items:center;gap:6px}
 footer.base a{color:inherit}
+.hero > .wrap{padding-bottom:56px}
