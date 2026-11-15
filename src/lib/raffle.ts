@@ -2,7 +2,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from './db';
 import { computeWinner, shortCode } from './draw';
 import { sendMail } from './mail';
-import { CLP, fmtLong, publicName } from './format';
+import { CLP, deArtist, fmtLong, publicName } from './format';
 
 /** Minutos que se reservan los números (o la obra) mientras la persona paga en Webpay. */
 export const HOLD_MINUTES = 15;
@@ -127,7 +127,7 @@ export async function runDraw(artworkId: string, partial: boolean) {
   });
   if (result) {
     await sendMail(result.email, `¡Ganaste "${result.a.title}"!`,
-      `Tu ticket #${result.draw.winnerNumber} ganó el sorteo de "${result.a.title}" de ${result.a.artist}.\nCódigo de verificación: ${result.draw.code}\nTe contactaremos para coordinar la entrega.`);
+      `Tu ticket #${result.draw.winnerNumber} ganó el sorteo de "${result.a.title}"${deArtist(result.a.artist)}.\nCódigo de verificación: ${result.draw.code}\nTe contactaremos para coordinar la entrega.`);
   }
   return result?.draw ?? null;
 }
@@ -231,7 +231,7 @@ export async function settleOrder(orderId: string, c: Commit) {
   const a = order.artwork;
   if (a.type === 'VENTA') {
     await prisma.artwork.update({ where: { id: a.id }, data: { status: 'SOLD', reservedOrderId: null, reservedUntil: null } });
-    await sendMail(order.email, `Compraste "${a.title}"`, `Pagaste ${CLP(order.amount)} por "${a.title}" de ${a.artist}. Te contactaremos para coordinar el despacho a ${order.comuna ?? 'tu comuna'}.`);
+    await sendMail(order.email, `Compraste "${a.title}"`, `Pagaste ${CLP(order.amount)} por "${a.title}"${deArtist(a.artist)}. Te contactaremos para coordinar el despacho a ${order.comuna ?? 'tu comuna'}.`);
   } else {
     await sendMail(order.email, `Tus tickets para "${a.title}"`,
       `Compraste los tickets ${order.numbers.split(',').map((n) => '#' + n).join(', ')} por ${CLP(order.amount)}.\nEl sorteo se hace al venderse el último ticket${a.endsAt ? ` o el ${fmtLong(a.endsAt)}` : ''}.`);

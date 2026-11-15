@@ -15,12 +15,12 @@ model Artwork {
   slug        String   @unique
   type        String // RIFA | VENTA
   title       String
-  artist      String
-  technique   String
-  size        String
+  artist      String   @default("")
+  technique   String   @default("") // tipo de cuadro; texto libre
+  size        String   @default("")
   value       Int? // valor referencial (CLP)
   description String?
-  imageUrl    String?
+  imageUrl    String? // foto principal (la primera de la galería)
   price       Int // precio por ticket (RIFA) o precio único (VENTA)
   status      String   @default("OPEN") // OPEN | DRAWN | CANCELLED | SOLD
   createdAt   DateTime @default(now())
@@ -40,6 +40,18 @@ model Artwork {
   tickets Ticket[]
   orders  Order[]
   draw    Draw?
+  images  ArtworkImage[]
+}
+
+model ArtworkImage {
+  id        String   @id @default(cuid())
+  artworkId String
+  artwork   Artwork  @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+  url       String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([artworkId, position])
 }
 
 model Order {

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
-import { CLP, fmtLong, pad } from '@/lib/format';
+import { CLP, fmtLong, meta, pad } from '@/lib/format';
 
 export const metadata = { title: 'Resultado de tu compra', robots: { index: false } };
 
@@ -37,7 +37,7 @@ export default async function CompraPage({ params }: { params: Promise<{ id: str
         {won && <div className="result"><span className="lbl">Ganaste</span><span className="big">Tu ticket #{a.draw!.winnerNumber} ganó el sorteo</span></div>}
         {o.status === 'PAID' && (
           <dl className="specs">
-            <dt>Obra</dt><dd>{a.title} · {a.artist}</dd><dt>Monto</dt><dd className="mono">{CLP(o.amount)}</dd>
+            <dt>Obra</dt><dd>{meta(a.title, a.artist)}</dd><dt>Monto</dt><dd className="mono">{CLP(o.amount)}</dd>
             {o.authCode && <><dt>Autorización</dt><dd className="mono">{o.authCode}</dd></>}
             {o.cardLast4 && <><dt>Tarjeta</dt><dd className="mono">**** {o.cardLast4}</dd></>}
             {o.paidAt && <><dt>Fecha</dt><dd>{fmtLong(o.paidAt)}</dd></>}

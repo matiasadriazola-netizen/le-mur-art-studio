@@ -40,3 +40,8 @@ export function toChileInput(d: Date) {
   const g = tzParts(d);
   return `${g.year}-${g.month}-${g.day}T${g.hour}:${g.minute}`;
 }
+
+/** Une datos opcionales con " · ", omitiendo los vacíos. */
+export const meta = (...parts: (string | null | undefined | false)[]) => parts.filter(Boolean).join(' · ');
+/** " de <artista>" o vacío si no hay artista. */
+export const deArtist = (artist?: string | null) => (artist ? ` de ${artist}` : '');

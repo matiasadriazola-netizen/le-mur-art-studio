@@ -2,11 +2,12 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { housekeeping, participants, ticketMap } from '@/lib/raffle';
-import { CLP, fmtDate, fmtLong } from '@/lib/format';
+import { CLP, deArtist, fmtDate, fmtLong, meta } from '@/lib/format';
 import { Icon } from '@/components/Icons';
 import { Countdown } from '@/components/Timer';
 import Participants from '@/components/Participants';
 import Tabs from '@/components/Tabs';
+import Gallery from '@/components/Gallery';
 import { SaleCheckout, TicketPicker } from '@/components/Checkout';
 
 const POLICY_TXT: Record<string, string> = {
@@ -17,17 +18,18 @@ const POLICY_TXT: Record<string, string> = {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const a = await prisma.artwork.findUnique({ where: { slug: (await params).slug } });
-  return { title: a ? `${a.title} · ${a.artist}` : 'Obra' };
+  return { title: a ? meta(a.title, a.artist) : 'Obra' };
 }
 
 export default async function ObraPage({ params }: { params: Promise<{ slug: string }> }) {
   await housekeeping();
-  const a = await prisma.artwork.findUnique({ where: { slug: (await params).slug }, include: { draw: true } });
+  const a = await prisma.artwork.findUnique({ where: { slug: (await params).slug }, include: { draw: true, images: { orderBy: { position: 'asc' } } } });
   if (!a) notFound();
+  const photos = a.images.length ? a.images.map((i) => i.url) : a.imageUrl ? [a.imageUrl] : [];
 
   const specs = (
     <dl className="specs">
-      <dt>Artista</dt><dd>{a.artist}</dd><dt>Técnica</dt><dd>{a.technique}</dd><dt>Medidas</dt><dd>{a.size}</dd>
+      {a.artist && <><dt>Artista</dt><dd>{a.artist}</dd></>}{a.technique && <><dt>Tipo</dt><dd>{a.technique}</dd></>}{a.size && <><dt>Medidas</dt><dd>{a.size}</dd></>}
       {a.value ? <><dt>Valor referencial</dt><dd className="mono">{CLP(a.value)}</dd></> : null}
       <dt>Certificado</dt><dd>Firmado por el artista</dd>
       <dt>Publicado</dt><dd>{a.createdAt.toLocaleDateString('es-CL', { dateStyle: 'long' })}</dd>
@@ -40,15 +42,15 @@ export default async function ObraPage({ params }: { params: Promise<{ slug: str
       <main className="wrap page">
         <Link className="back" href="/#venta"><Icon name="left" size={16} />Volver a venta directa</Link>
         <div className="detail">
-          <div className="art"><img src={a.imageUrl || '/seed/placeholder.svg'} alt={a.title} />{specs}{a.description && <p className="muted" style={{ fontSize: 14 }}>{a.description}</p>}</div>
+          <div className="art"><Gallery photos={photos} title={a.title} />{specs}{a.description && <p className="muted" style={{ fontSize: 14 }}>{a.description}</p>}</div>
           <div className="buy">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-start' }}>
               {a.status === 'SOLD' ? <span className="pill sold">Vendido</span> : <span className="pill sale">Venta directa · Precio único</span>}
-              <h1>{a.title}</h1><span className="muted">{a.artist} · {a.technique} · {a.size}</span>
+              <h1>{a.title}</h1>{meta(a.artist, a.technique, a.size) && <span className="muted">{meta(a.artist, a.technique, a.size)}</span>}
             </div>
             <div className="counter"><b>{CLP(a.price)}</b><span className="muted">obra única · incluye embalaje</span></div>
             {a.status === 'SOLD' ? (
-              <div className="result"><span className="lbl">Esta obra ya fue vendida</span><span>Mira los sorteos activos: puede haber otra obra de {a.artist}.</span><Link className="btn btn-line" href="/#sorteos" style={{ alignSelf: 'flex-start' }}>Ver sorteos por ticket</Link></div>
+              <div className="result"><span className="lbl">Esta obra ya fue vendida</span><span>Mira los sorteos activos: puede haber otra obra{deArtist(a.artist)}.</span><Link className="btn btn-line" href="/#sorteos" style={{ alignSelf: 'flex-start' }}>Ver sorteos por ticket</Link></div>
             ) : reserved ? (
               <div className="result"><span className="lbl">Reservada</span><span>Otra persona está pagando esta obra en este momento. Si no completa el pago, vuelve a estar disponible a las {a.reservedUntil!.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Santiago' })}.</span></div>
             ) : (
@@ -69,12 +71,12 @@ export default async function ObraPage({ params }: { params: Promise<{ slug: str
     <main className="wrap page">
       <Link className="back" href="/#sorteos"><Icon name="left" size={16} />Volver a sorteos</Link>
       <div className="detail">
-        <div className="art"><img src={a.imageUrl || '/seed/placeholder.svg'} alt={a.title} /></div>
+        <div className="art"><Gallery photos={photos} title={a.title} /></div>
         <div className="buy">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-start' }}>
             {a.status === 'DRAWN' ? <span className="pill done">Sorteado</span> : a.status === 'CANCELLED' ? <span className="pill sold">Cancelado</span>
               : left <= 3 ? <span className="pill hot">{left === 1 ? 'Queda 1 ticket' : `Quedan ${left}`}</span> : <span className="pill open">Disponible</span>}
-            <h1>{a.title}</h1><span className="muted">{a.artist} · {a.technique} · {a.size}</span>
+            <h1>{a.title}</h1>{meta(a.artist, a.technique, a.size) && <span className="muted">{meta(a.artist, a.technique, a.size)}</span>}
           </div>
           <div className="dstats">
             <div><b>{CLP(a.price)}</b><span>por ticket</span></div>

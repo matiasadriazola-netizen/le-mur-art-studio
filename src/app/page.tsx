@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { catalog, isOpenRifa, leftOf, type CardItem } from '@/lib/catalog';
 import { getSettings } from '@/lib/settings';
-import { CLP } from '@/lib/format';
+import { CLP, deArtist, meta } from '@/lib/format';
 import { Icon } from '@/components/Icons';
 import Explore from '@/components/Explore';
 import { gpillText, Img, isHot } from '@/components/ArtCard';
@@ -17,7 +17,7 @@ function Overlay({ a, cls }: { a: CardItem; cls: string }) {
         {isOpenRifa(a) && a.endsAt && <TimerPill endsAt={a.endsAt} />}
       </div>
       <div className="bot">
-        <div><h3>{a.title}</h3><div className="sub">{a.artist} · {CLP(a.price)}{a.type === 'RIFA' ? ' por ticket' : ''}</div></div>
+        <div><h3>{a.title}</h3><div className="sub">{meta(a.artist, CLP(a.price) + (a.type === 'RIFA' ? ' por ticket' : ''))}</div></div>
         <span className="arrow"><Icon name="arrow" /></span>
       </div>
     </Link>
@@ -129,7 +129,7 @@ export default async function Home() {
             {drawn.length ? drawn.map((a) => (
               <Link key={a.id} className="wcard" href={`/verificar/${a.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                 <div className="stubn">#{String(a.winnerNumber).padStart(2, '0')}</div>
-                <div className="info"><b>{a.winnerName}</b><span>ganó “{a.title}” de {a.artist}</span>
+                <div className="info"><b>{a.winnerName}</b><span>ganó “{a.title}”{deArtist(a.artist)}</span>
                   <span className="mono">{new Date(a.drawAt!).toLocaleDateString('es-CL', { dateStyle: 'medium' })} · {a.drawSold} tickets · {a.drawCode}</span></div>
               </Link>
             )) : <div className="empty">Aún no hay sorteos realizados.</div>}

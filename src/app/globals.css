@@ -436,3 +436,23 @@ a.ov,a.mini{color:var(--on-img)}
 .formside .current img{max-height:80px;width:auto;border-radius:8px;background:#1b211c;padding:6px}
 @media (max-width:960px){.detail{grid-template-columns:1fr}.detail .art{position:static}.detail .art img{aspect-ratio:16/11;max-height:52vh}}
 @media (max-width:560px){.detail .buy{padding:20px}}
+/* galería de fotos (admin y ficha) */
+.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-top:6px}
+.ph{position:relative;border-radius:12px;overflow:hidden;background:var(--surface-2);aspect-ratio:4/5;border:1px solid var(--line)}
+.ph.main{outline:2px solid var(--brand);outline-offset:1px}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ph .badge{position:absolute;left:6px;top:6px;font-size:11px;font-weight:600;background:var(--glass-strong);color:var(--ink);border-radius:99px;padding:3px 8px;border:0}
+.ph .badge.as-btn{cursor:pointer}
+.ph-acts{position:absolute;left:6px;right:6px;bottom:6px;display:flex;gap:4px}
+.ph-acts button{flex:1;font-size:12px;border:0;border-radius:8px;padding:5px 0;background:var(--glass-strong);color:var(--ink);cursor:pointer}
+.ph-acts button:disabled{opacity:.35;cursor:default}
+.ph.add{display:grid;place-items:center;cursor:pointer;border-style:dashed;color:var(--muted);font-size:14px;font-weight:500}
+.ph.add input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.gallery{display:flex;flex-direction:column;gap:10px}
+.gallery .main-img{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:var(--r-lg);background:var(--surface-2);display:block}
+.thumbs{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.thumbs button{flex:none;width:72px;height:88px;border-radius:10px;overflow:hidden;padding:0;border:2px solid transparent;background:var(--surface-2);cursor:pointer}
+.thumbs button[aria-pressed="true"]{border-color:var(--brand)}
+.thumbs img{width:100%;height:100%;object-fit:cover;display:block}
+@media (max-width:960px){.gallery .main-img{aspect-ratio:16/11;max-height:52vh}}
+.detail .art .thumbs img{aspect-ratio:auto;height:100%;border-radius:0;background:none}

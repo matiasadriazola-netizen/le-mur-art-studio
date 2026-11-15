@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { CLP } from '@/lib/format';
+import { CLP, meta } from '@/lib/format';
 import type { CardItem } from '@/lib/catalog';
 import { TimerPill } from './Timer';
 
@@ -26,7 +26,7 @@ export default function ArtCard({ a }: { a: CardItem }) {
         {a.type === 'RIFA' && open && a.endsAt && <TimerPill endsAt={a.endsAt} />}
       </div>
       <div className="body">
-        <div><h3>{a.title}</h3><span className="by">{a.artist} · {a.size}</span></div>
+        <div><h3>{a.title}</h3><span className="by">{meta(a.artist, a.size) || a.technique}</span></div>
         {a.type === 'VENTA' ? (
           <div className="row"><span className="price">{CLP(a.price)}</span><span className="more">{open ? 'Comprar' : 'Vendido'} <svg className="icon" style={{ width: 16, height: 16 }}><use href="#i-right" /></svg></span></div>
         ) : a.status === 'DRAWN' ? (

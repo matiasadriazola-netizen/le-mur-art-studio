@@ -1,26 +1,68 @@
 'use client';
-import { useActionState, useState } from 'react';
+import { useActionState, useEffect, useRef, useState } from 'react';
 import { saveArtwork, type FormState } from './actions';
 import { CLP } from '@/lib/format';
 
 export type ArtworkInput = {
   id?: string; type: 'RIFA' | 'VENTA'; title: string; artist: string; technique: string; size: string; value: number | null;
-  description: string; price: number; totalTickets: number; endsAt: string; policy: string; imageUrl: string | null; soldOrHeld: number;
+  description: string; price: number; totalTickets: number; endsAt: string; policy: string; photos: string[]; soldOrHeld: number;
 };
 
-const TECH = ['Óleo sobre tela', 'Acrílico sobre tela', 'Acuarela sobre papel', 'Técnica mixta', 'Fotografía', 'Grabado', 'Óleo sobre madera'];
+const MAX_PHOTOS = 12;
+type Photo = { key: string; src: string; token: string; file?: File };
 
-export default function ArtworkForm({ initial }: { initial: ArtworkInput }) {
+/** Reduce la foto a 2000 px como máximo antes de subirla (más rápido y liviano). */
+async function shrink(file: File): Promise<File> {
+  if (!/^image\/(jpeg|png|webp)$/.test(file.type)) return file;
+  try {
+    const bmp = await createImageBitmap(file);
+    const s = Math.min(1, 2000 / Math.max(bmp.width, bmp.height));
+    if (s === 1 && file.size < 1.5e6) return file;
+    const c = document.createElement('canvas');
+    c.width = Math.round(bmp.width * s); c.height = Math.round(bmp.height * s);
+    c.getContext('2d')!.drawImage(bmp, 0, 0, c.width, c.height);
+    const blob: Blob | null = await new Promise((r) => c.toBlob(r, 'image/jpeg', 0.86));
+    return blob ? new File([blob], file.name.replace(/\.\w+$/, '') + '.jpg', { type: 'image/jpeg' }) : file;
+  } catch { return file; }
+}
+
+export default function ArtworkForm({ initial, techniques }: { initial: ArtworkInput; techniques: string[] }) {
   const [state, action, pending] = useActionState<FormState, FormData>(saveArtwork, {});
   const [type, setType] = useState(initial.type);
   const [tickets, setTickets] = useState(initial.totalTickets), [tprice, setTprice] = useState(initial.price), [value, setValue] = useState(initial.value ?? 0);
-  const [preview, setPreview] = useState<string | null>(initial.imageUrl);
+  const [photos, setPhotos] = useState<Photo[]>(initial.photos.map((u) => ({ key: u, src: u, token: `url:${u}` })));
+  const [busy, setBusy] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
   const editing = !!initial.id, locked = initial.soldOrHeld > 0;
-  const techs = TECH.includes(initial.technique) || !initial.technique ? TECH : [initial.technique, ...TECH];
+
+  async function addFiles(list: FileList | null) {
+    if (!list?.length) return;
+    setBusy(true);
+    const room = MAX_PHOTOS - photos.length;
+    const files = await Promise.all([...list].slice(0, Math.max(0, room)).map(shrink));
+    setPhotos((p) => [...p, ...files.map((f, i) => ({ key: `n${Date.now()}-${i}`, src: URL.createObjectURL(f), token: '', file: f }))]);
+    setBusy(false);
+    if (fileInput.current) fileInput.current.value = '';
+  }
+  const move = (i: number, d: number) => setPhotos((p) => { const c = [...p]; const j = i + d; if (j < 0 || j >= c.length) return p; [c[i], c[j]] = [c[j], c[i]]; return c; });
+  const cover = (i: number) => setPhotos((p) => [p[i], ...p.filter((_, k) => k !== i)]);
+  const remove = (i: number) => setPhotos((p) => p.filter((_, k) => k !== i));
+
+  // Al enviar: las fotos nuevas viajan como archivos "images" y el orden en "photoOrder"
+  function submit(fd: FormData) {
+    fd.delete('images');
+    let n = 0;
+    const order = photos.map((ph) => { if (ph.file) { fd.append('images', ph.file); return `new:${n++}`; } return ph.token; });
+    fd.set('photoOrder', JSON.stringify(order));
+    return action(fd);
+  }
+  useEffect(() => () => photos.forEach((p) => p.file && URL.revokeObjectURL(p.src)), []); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
-    <form className="panel pub" action={action}>
+    <form className="panel pub" action={submit}>
       <div className="formside">
         <div><h2 style={{ fontSize: 28 }}>{editing ? 'Editar cuadro' : 'Publicar un cuadro'}</h2>
+          <p className="muted" style={{ marginTop: 6, fontSize: 14 }}>Solo el título y el precio son obligatorios.</p>
           {locked && <p className="edit-banner" style={{ marginTop: 10 }}>Ya tiene {initial.soldOrHeld} tickets vendidos o reservados: puedes subir la cantidad o mover el cierre, pero no bajar de {initial.soldOrHeld} ni cambiar el precio.</p>}</div>
         {initial.id && <input type="hidden" name="id" value={initial.id} />}
         <input type="hidden" name="type" value={type} />
@@ -31,35 +73,59 @@ export default function ArtworkForm({ initial }: { initial: ArtworkInput }) {
           </div>
         )}
         <div className="form">
-          <label className="full">Título de la obra<input name="title" defaultValue={initial.title} maxLength={80} placeholder="Ej: Atardecer en Chiloé" /></label>
-          <label>Artista<input name="artist" defaultValue={initial.artist} placeholder="Ej: Camila Rojas" /></label>
-          <label>Técnica<select name="technique" defaultValue={initial.technique || TECH[0]}>{techs.map((t) => <option key={t}>{t}</option>)}</select></label>
-          <label>Medidas<input name="size" defaultValue={initial.size} placeholder="Ej: 60 × 80 cm" /></label>
-          <label>Valor referencial (CLP)<input name="value" inputMode="numeric" defaultValue={initial.value ?? ''} onChange={(e) => setValue(+e.target.value.replace(/\D/g, '') || 0)} placeholder="Ej: 350000" /></label>
-          <div className="full field">Foto del cuadro <span className="hint">JPG, PNG o WEBP de hasta 8 MB. Idealmente de frente y bien iluminada.</span>
-            <div className="drop"><input name="image" type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => { const f = e.target.files?.[0]; if (f) setPreview(URL.createObjectURL(f)); }} /></div></div>
+          <label className="full">Título de la obra *<input name="title" defaultValue={initial.title} maxLength={80} placeholder="Ej: Atardecer en Chiloé" required /></label>
+          <label>Artista (opcional)<input name="artist" defaultValue={initial.artist} placeholder="Ej: Camila Rojas" /></label>
+          <label>Tipo de cuadro (opcional)
+            <input name="technique" list="techniques" defaultValue={initial.technique} placeholder="Elige o escribe uno nuevo" maxLength={60} />
+            <datalist id="techniques">{techniques.map((t) => <option key={t} value={t} />)}</datalist>
+          </label>
+          <label>Medidas (opcional)<input name="size" defaultValue={initial.size} placeholder="Ej: 60 × 80 cm" /></label>
+          <label>Valor referencial (opcional, CLP)<input name="value" inputMode="numeric" defaultValue={initial.value ?? ''} onChange={(e) => setValue(+e.target.value.replace(/\D/g, '') || 0)} placeholder="Ej: 350000" /></label>
           <label className="full">Descripción (opcional)<textarea name="description" defaultValue={initial.description} placeholder="Cuenta algo de la obra o del artista" /></label>
         </div>
+
+        <div className="field">Fotos ({photos.length}/{MAX_PHOTOS}) <span className="hint">La primera es la principal: se ve en la portada y en las tarjetas. Usa las flechas para ordenar.</span>
+          <div className="photos">
+            {photos.map((p, i) => (
+              <div className={`ph${i === 0 ? ' main' : ''}`} key={p.key}>
+                <img src={p.src} alt={`Foto ${i + 1}`} />
+                {i === 0 ? <span className="badge">Principal</span> : <button type="button" className="badge as-btn" onClick={() => cover(i)}>Hacer principal</button>}
+                <div className="ph-acts">
+                  <button type="button" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Mover a la izquierda">←</button>
+                  <button type="button" onClick={() => move(i, 1)} disabled={i === photos.length - 1} aria-label="Mover a la derecha">→</button>
+                  <button type="button" onClick={() => remove(i)} aria-label="Quitar foto">Quitar</button>
+                </div>
+              </div>
+            ))}
+            {photos.length < MAX_PHOTOS && (
+              <label className="ph add">
+                <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={(e) => addFiles(e.target.files)} />
+                <span>{busy ? 'Preparando…' : '+ Agregar fotos'}</span>
+              </label>
+            )}
+          </div>
+        </div>
+
         {type === 'RIFA' ? (
           <div className="form">
-            <label>Cantidad de tickets<input name="totalTickets" inputMode="numeric" defaultValue={initial.totalTickets} onChange={(e) => setTickets(+e.target.value.replace(/\D/g, '') || 0)} /></label>
-            <label>Precio por ticket (CLP)<input name="price" inputMode="numeric" defaultValue={initial.price} disabled={locked} onChange={(e) => setTprice(+e.target.value.replace(/\D/g, '') || 0)} /></label>
-            <label>Cierre de venta de tickets (hora de Chile)<input name="endsAt" type="datetime-local" defaultValue={initial.endsAt} /></label>
+            <label>Cantidad de tickets *<input name="totalTickets" inputMode="numeric" defaultValue={initial.totalTickets} onChange={(e) => setTickets(+e.target.value.replace(/\D/g, '') || 0)} /></label>
+            <label>Precio por ticket (CLP) *<input name="price" inputMode="numeric" defaultValue={initial.price} disabled={locked} onChange={(e) => setTprice(+e.target.value.replace(/\D/g, '') || 0)} /></label>
+            <label>Cierre de venta de tickets (hora de Chile) *<input name="endsAt" type="datetime-local" defaultValue={initial.endsAt} /></label>
             <label>Si no se completa a tiempo<select name="policy" defaultValue={initial.policy}><option value="DRAW">Sortear entre los vendidos</option><option value="EXTEND">Extender 7 días</option><option value="CANCEL">Cancelar y reembolsar</option></select></label>
             <div className="full calc"><span>Recaudación al completar: <b>{CLP(tickets * tprice)}</b></span>{value > 0 && <span>{tickets * tprice >= value ? 'Cubre' : 'No cubre'} el valor referencial ({Math.round((tickets * tprice) / value * 100)}%)</span>}</div>
           </div>
         ) : (
-          <div className="form"><label>Precio de venta (CLP)<input name="price" inputMode="numeric" defaultValue={initial.price} /></label></div>
+          <div className="form"><label>Precio de venta (CLP) *<input name="price" inputMode="numeric" defaultValue={initial.price} /></label></div>
         )}
         <p className="err" role="alert">{state.error}</p>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <button className="btn btn-brand" disabled={pending}>{pending ? 'Guardando…' : editing ? 'Guardar cambios' : 'Publicar ahora'}</button>
+          <button className="btn btn-brand" disabled={pending || busy}>{pending ? 'Guardando…' : editing ? 'Guardar cambios' : 'Publicar ahora'}</button>
           <a className="btn btn-line" href="/admin">Cancelar</a>
         </div>
       </div>
       <div className="previewside">
-        <span className="lbl">Foto</span>
-        {preview ? <img src={preview} alt="" style={{ borderRadius: 14, width: '100%', aspectRatio: '4/5', objectFit: 'cover' }} /> : <div className="empty">Sin foto todavía</div>}
+        <span className="lbl">Foto principal</span>
+        {photos[0] ? <img src={photos[0].src} alt="" style={{ borderRadius: 14, width: '100%', aspectRatio: '4/5', objectFit: 'cover' }} /> : <div className="empty">Sin fotos todavía</div>}
         <p className="muted" style={{ fontSize: 13 }}>{type === 'RIFA' ? 'Al publicar se genera la semilla secreta del sorteo y se muestra su huella en la ficha.' : 'La primera persona que pague se lleva la obra.'}</p>
       </div>
     </form>

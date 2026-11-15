@@ -10,6 +10,7 @@ import { cancelRaffle, runDraw } from '@/lib/raffle';
 import { webpay } from '@/lib/webpay';
 
 export type FormState = { error?: string; ok?: string };
+const MAX_PHOTOS = 12;
 
 export async function login(_: FormState, fd: FormData): Promise<FormState> {
   if (!checkPassword(String(fd.get('password') ?? ''))) return { error: 'Clave incorrecta.' };
@@ -37,46 +38,57 @@ async function uniqueSlug(base: string, exceptId?: string) {
 export async function saveArtwork(_: FormState, fd: FormData): Promise<FormState> {
   await requireAdmin();
   const id = str(fd.get('id')) || null;
-  const existing = id ? await prisma.artwork.findUnique({ where: { id } }) : null;
+  const existing = id ? await prisma.artwork.findUnique({ where: { id }, include: { images: { orderBy: { position: 'asc' } } } }) : null;
   const type = existing?.type ?? (str(fd.get('type')) === 'VENTA' ? 'VENTA' : 'RIFA');
-  const title = str(fd.get('title'), 80), artist = str(fd.get('artist'), 80), size = str(fd.get('size'), 40);
+  const title = str(fd.get('title'), 80);
   if (!title) return { error: 'Ponle un título a la obra.' };
-  if (!artist) return { error: 'Indica el nombre del artista.' };
-  if (!size) return { error: 'Indica las medidas, por ejemplo 60 × 80 cm.' };
-  let imageUrl: string | null;
-  try { imageUrl = await saveImage(fd.get('image')); } catch (e) { return { error: (e as Error).message }; }
+  if (existing && existing.status !== 'OPEN') return { error: 'Esta obra ya está cerrada y no se puede editar.' };
 
   const base = {
-    title, artist, size, technique: str(fd.get('technique'), 60), value: int(fd.get('value')) || null,
-    description: str(fd.get('description'), 1200) || null, ...(imageUrl ? { imageUrl } : {}),
+    title, artist: str(fd.get('artist'), 80), size: str(fd.get('size'), 40), technique: str(fd.get('technique'), 60),
+    value: int(fd.get('value')) || null, description: str(fd.get('description'), 1200) || null,
   };
 
+  // Validación de precios y tickets antes de guardar fotos
+  let typed: Record<string, unknown>;
+  const price = int(fd.get('price'));
   if (type === 'RIFA') {
-    const total = int(fd.get('totalTickets')), price = int(fd.get('price'));
+    const total = int(fd.get('totalTickets'));
     const endsAt = fromChileInput(str(fd.get('endsAt')));
     const policy = ['DRAW', 'EXTEND', 'CANCEL'].includes(str(fd.get('policy'))) ? str(fd.get('policy')) : 'DRAW';
     const sold = existing ? await prisma.ticket.count({ where: { artworkId: existing.id, order: { status: { in: ['PAID', 'PENDING'] } } } }) : 0;
     if (total < 2 || total > 500) return { error: 'La cantidad de tickets debe estar entre 2 y 500.' };
     if (total < sold) return { error: `Ya hay ${sold} tickets vendidos o reservados; la cantidad no puede ser menor.` };
-    if (!existing || sold === 0) { if (price < 500) return { error: 'El precio por ticket debe ser de al menos $500.' }; }
+    if (sold === 0 && price < 500) return { error: 'El precio por ticket debe ser de al menos $500.' };
     if (!endsAt || isNaN(+endsAt) || +endsAt < Date.now() + 3_600_000) return { error: 'Elige una fecha de cierre al menos 1 hora en el futuro.' };
-    const data = { ...base, totalTickets: total, endsAt, policy, ...(sold === 0 ? { price } : {}) };
-    if (existing) {
-      if (existing.status !== 'OPEN') return { error: 'Esta obra ya está cerrada y no se puede editar.' };
-      await prisma.artwork.update({ where: { id: existing.id }, data });
-    } else {
-      await prisma.artwork.create({ data: { ...data, price, type, slug: await uniqueSlug(title), ...newSeed() } });
-    }
+    typed = { totalTickets: total, endsAt, policy, ...(sold === 0 ? { price } : {}) };
   } else {
-    const price = int(fd.get('price'));
     if (price < 1000) return { error: 'Indica un precio de venta válido.' };
-    if (existing) {
-      if (existing.status !== 'OPEN') return { error: 'Esta obra ya fue vendida y no se puede editar.' };
-      await prisma.artwork.update({ where: { id: existing.id }, data: { ...base, price } });
-    } else {
-      await prisma.artwork.create({ data: { ...base, price, type, slug: await uniqueSlug(title) } });
-    }
+    typed = { price };
   }
+
+  // Fotos: el orden llega como ["url:/uploads/a.jpg", "new:0", ...]; la primera es la principal
+  let photos: string[];
+  try {
+    const order: string[] = JSON.parse(str(fd.get('photoOrder'), 20000) || '[]');
+    const files = fd.getAll('images').filter((f): f is File => typeof f !== 'string' && f.size > 0);
+    if (files.length > MAX_PHOTOS) return { error: `Puedes subir hasta ${MAX_PHOTOS} fotos por obra.` };
+    const saved: string[] = [];
+    for (const f of files) { const url = await saveImage(f); if (url) saved.push(url); }
+    const known = new Set([...(existing?.images.map((i) => i.url) ?? []), ...(existing?.imageUrl ? [existing.imageUrl] : [])]);
+    photos = order.map((t) => (t.startsWith('new:') ? saved[Number(t.slice(4))] : known.has(t.slice(4)) ? t.slice(4) : undefined)).filter((u): u is string => !!u);
+    for (const u of saved) if (!photos.includes(u)) photos.push(u);
+    photos = [...new Set(photos)].slice(0, MAX_PHOTOS);
+  } catch (e) { return { error: (e as Error).message || 'No se pudieron guardar las fotos.' }; }
+
+  const data = { ...base, ...typed, imageUrl: photos[0] ?? null };
+  const artworkId = existing
+    ? (await prisma.artwork.update({ where: { id: existing.id }, data })).id
+    : (await prisma.artwork.create({ data: { ...data, price, type, slug: await uniqueSlug(title), ...(type === 'RIFA' ? newSeed() : {}) } })).id;
+  await prisma.$transaction([
+    prisma.artworkImage.deleteMany({ where: { artworkId } }),
+    prisma.artworkImage.createMany({ data: photos.map((url, position) => ({ artworkId, url, position })) }),
+  ]);
   revalidatePath('/', 'layout');
   redirect(`/admin?ok=${encodeURIComponent(existing ? `Se guardaron los cambios de “${title}”` : `“${title}” quedó publicada`)}`);
 }
