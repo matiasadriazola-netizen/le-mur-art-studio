@@ -13,7 +13,12 @@ export const dynamic = 'force-dynamic';
 
 export async function generateMetadata(): Promise<Metadata> {
   const s = await getSettings();
-  return { title: s.name, description: 'Cuadros originales a precio único o por sorteo con tickets.' };
+  return {
+    metadataBase: new URL(process.env.APP_URL || 'https://www.lemurstudio.cl'),
+    title: s.name,
+    description: 'Cuadros originales a precio único o por sorteo con tickets.',
+    openGraph: { siteName: s.name, locale: 'es_CL', type: 'website' },
+  };
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
