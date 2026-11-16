@@ -5,10 +5,10 @@ import { TimerPill } from './Timer';
 
 export function gpillText(a: CardItem) {
   if (a.type === 'VENTA') return a.status === 'SOLD' ? 'Vendido' : 'Venta directa';
-  if (a.status === 'DRAWN') return 'Sorteado';
+  if (a.status === 'DRAWN') return 'Rematado';
   if (a.status === 'CANCELLED') return 'Cancelado';
   const l = (a.totalTickets ?? 0) - a.sold;
-  return l <= 3 ? (l === 1 ? 'Queda 1 ticket' : `Quedan ${l} tickets`) : `Sorteo · ${a.sold}/${a.totalTickets}`;
+  return l <= 3 ? (l === 1 ? 'Queda 1 ticket' : `Quedan ${l} tickets`) : `Remate · ${a.sold}/${a.totalTickets}`;
 }
 export const isHot = (a: CardItem) => a.type === 'RIFA' && a.status === 'OPEN' && (a.totalTickets ?? 0) - a.sold <= 3;
 

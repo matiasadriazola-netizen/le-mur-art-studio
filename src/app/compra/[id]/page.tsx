@@ -18,7 +18,7 @@ export default async function CompraPage({ params }: { params: Promise<{ id: str
       title = a.type === 'VENTA' ? '¡La obra es tuya!' : '¡Tus tickets están confirmados!';
       body = a.type === 'VENTA'
         ? <p>Pagaste {CLP(o.amount)} por “{a.title}”. Te contactaremos al {o.phone ?? o.email} para coordinar el despacho a {[o.address, o.comuna].filter(Boolean).join(', ')}.</p>
-        : <p>Compraste {nums.length} ticket{nums.length > 1 ? 's' : ''} para “{a.title}”: {nums.map((n) => <span key={n} className="tnum" style={{ marginRight: 4 }}>#{pad(n)}</span>)}. Te avisaremos a {o.email} cuando se haga el sorteo.</p>;
+        : <p>Compraste {nums.length} ticket{nums.length > 1 ? 's' : ''} para “{a.title}”: {nums.map((n) => <span key={n} className="tnum" style={{ marginRight: 4 }}>#{pad(n)}</span>)}. Te avisaremos a {o.email} cuando se haga el remate.</p>;
       break;
     case 'PENDING': title = 'Estamos confirmando tu pago'; body = <p>Recarga esta página en unos segundos.</p>; break;
     case 'ABORTED': title = 'Anulaste el pago'; body = <p>No se hizo ningún cargo y {a.type === 'VENTA' ? 'la obra volvió a estar disponible' : 'los números quedaron libres'}. Puedes intentarlo de nuevo.</p>; break;
@@ -34,7 +34,7 @@ export default async function CompraPage({ params }: { params: Promise<{ id: str
         <span className="lbl">Orden {o.buyOrder}</span>
         <h1 style={{ color: tone === 'ok' ? 'var(--ok)' : undefined }}>{title}</h1>
         {body}
-        {won && <div className="result"><span className="lbl">Ganaste</span><span className="big">Tu ticket #{a.draw!.winnerNumber} ganó el sorteo</span></div>}
+        {won && <div className="result"><span className="lbl">Ganaste</span><span className="big">Tu ticket #{a.draw!.winnerNumber} ganó el remate</span></div>}
         {o.status === 'PAID' && (
           <dl className="specs">
             <dt>Obra</dt><dd>{meta(a.title, a.artist)}</dd>{o.frameName && <><dt>Marco</dt><dd>{o.frameName}{o.frameExtra ? ` (+ ${CLP(o.frameExtra)})` : ''}</dd></>}<dt>Monto</dt><dd className="mono">{CLP(o.amount)}</dd>

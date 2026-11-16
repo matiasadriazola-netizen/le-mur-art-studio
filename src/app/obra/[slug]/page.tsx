@@ -11,9 +11,9 @@ import Gallery from '@/components/Gallery';
 import { SaleCheckout, TicketPicker } from '@/components/Checkout';
 
 const POLICY_TXT: Record<string, string> = {
-  DRAW: 'Si no se venden todos los tickets antes del cierre, se sortea igual entre los números vendidos.',
+  DRAW: 'Si no se venden todos los tickets antes del cierre, se elige igual un ganador entre los números vendidos.',
   EXTEND: 'Si no se completa a tiempo, el plazo se extiende 7 días.',
-  CANCEL: 'Si no se completa a tiempo, el sorteo se cancela y se devuelve el 100% del dinero.',
+  CANCEL: 'Si no se completa a tiempo, el remate se cancela y se devuelve el 100% del dinero.',
 };
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
@@ -51,7 +51,7 @@ export default async function ObraPage({ params }: { params: Promise<{ slug: str
             </div>
             <div className="counter"><b>{CLP(a.price)}</b><span className="muted">{a.frameOptions.some((f) => f.extra > 0) ? 'precio base · el marco se elige abajo' : 'obra única · incluye embalaje'}</span></div>
             {a.status === 'SOLD' ? (
-              <div className="result"><span className="lbl">Esta obra ya fue vendida</span><span>Mira los sorteos activos: puede haber otra obra{deArtist(a.artist)}.</span><Link className="btn btn-line" href="/#sorteos" style={{ alignSelf: 'flex-start' }}>Ver sorteos por ticket</Link></div>
+              <div className="result"><span className="lbl">Esta obra ya fue vendida</span><span>Mira los remates activos: puede haber otra obra{deArtist(a.artist)}.</span><Link className="btn btn-line" href="/#remates" style={{ alignSelf: 'flex-start' }}>Ver remates por ticket</Link></div>
             ) : reserved ? (
               <div className="result"><span className="lbl">Reservada</span><span>Otra persona está pagando esta obra en este momento. Si no completa el pago, vuelve a estar disponible a las {a.reservedUntil!.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Santiago' })}.</span></div>
             ) : (
@@ -71,12 +71,12 @@ export default async function ObraPage({ params }: { params: Promise<{ slug: str
 
   return (
     <main className="wrap page">
-      <Link className="back" href="/#sorteos"><Icon name="left" size={16} />Volver a sorteos</Link>
+      <Link className="back" href="/#remates"><Icon name="left" size={16} />Volver a remates</Link>
       <div className="detail">
         <div className="art"><Gallery photos={photos} title={a.title} /></div>
         <div className="buy">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-start' }}>
-            {a.status === 'DRAWN' ? <span className="pill done">Sorteado</span> : a.status === 'CANCELLED' ? <span className="pill sold">Cancelado</span>
+            {a.status === 'DRAWN' ? <span className="pill done">Rematado</span> : a.status === 'CANCELLED' ? <span className="pill sold">Cancelado</span>
               : left <= 3 ? <span className="pill hot">{left === 1 ? 'Queda 1 ticket' : `Quedan ${left}`}</span> : <span className="pill open">Disponible</span>}
             <h1>{a.title}</h1>{meta(a.artist, a.technique, a.size) && <span className="muted">{meta(a.artist, a.technique, a.size)}</span>}
           </div>
@@ -97,15 +97,15 @@ export default async function ObraPage({ params }: { params: Promise<{ slug: str
           )}
           {a.draw && (
             <div className="result">
-              <span className="lbl">Ganador del sorteo</span><span className="big">{a.draw.winnerName}</span>
+              <span className="lbl">Ganador del remate</span><span className="big">{a.draw.winnerName}</span>
               <span>Ticket <span className="tnum">#{a.draw.winnerNumber}</span> · {fmtLong(a.draw.createdAt)}</span>
-              {a.draw.partial && <span className="muted" style={{ fontSize: 13 }}>Se cumplió el plazo y se sorteó entre los {a.draw.ticketsSold} tickets vendidos.</span>}
+              {a.draw.partial && <span className="muted" style={{ fontSize: 13 }}>Se cumplió el plazo y se eligió al ganador entre los {a.draw.ticketsSold} tickets vendidos.</span>}
               {external
-                ? <span className="muted" style={{ fontSize: 14 }}>Sorteo realizado en vivo{a.draw.proofUrl ? <> · <a href={a.draw.proofUrl} target="_blank" rel="noopener noreferrer">Ver el sorteo</a></> : null}</span>
-                : <span className="code mono">Código: {a.draw.code} · <Link href={`/verificar/${a.slug}`}>Verificar sorteo</Link></span>}
+                ? <span className="muted" style={{ fontSize: 14 }}>Remate realizado en vivo{a.draw.proofUrl ? <> · <a href={a.draw.proofUrl} target="_blank" rel="noopener noreferrer">Ver el remate</a></> : null}</span>
+                : <span className="code mono">Código: {a.draw.code} · <Link href={`/verificar/${a.slug}`}>Verificar remate</Link></span>}
             </div>
           )}
-          {a.status === 'CANCELLED' && <div className="result"><span className="lbl">Sorteo cancelado</span><span>Se cumplió el plazo sin completar los tickets. Se devuelve el dinero a todos los compradores.</span></div>}
+          {a.status === 'CANCELLED' && <div className="result"><span className="lbl">Remate cancelado</span><span>Se cumplió el plazo sin completar los tickets. Se devuelve el dinero a todos los compradores.</span></div>}
 
           {external ? (
             <div className="dpanel">{specs}{a.description && <p className="muted" style={{ fontSize: 14 }}>{a.description}</p>}</div>
@@ -119,16 +119,16 @@ export default async function ObraPage({ params }: { params: Promise<{ slug: str
                   <>
                     {specs}
                     {a.description && <p className="muted" style={{ fontSize: 14 }}>{a.description}</p>}
-                    <div className="result"><span className="lbl">Reglas del sorteo</span>
+                    <div className="result"><span className="lbl">Reglas del remate</span>
                       <ul className="rules">
-                        <li>Se sortea automáticamente cuando se vende el último ticket{a.endsAt && !closed ? `, o al cierre del ${fmtDate(a.endsAt)}` : ''}.</li>
+                        <li>El remate se hace automáticamente cuando se vende el último ticket{a.endsAt && !closed ? `, o al cierre del ${fmtDate(a.endsAt)}` : ''}.</li>
                         <li>{POLICY_TXT[a.policy ?? 'DRAW']}</li>
                         <li>Cada ticket es una posibilidad de ganar. Puedes comprar varios números.</li>
                         <li>El ganador se publica con nombre, inicial del apellido, número y una prueba verificable.</li>
                       </ul>
                     </div>
-                    <div className="verify-box"><span className="lbl">Sorteo verificable</span>
-                      <span style={{ fontSize: 14 }}>Huella de la semilla secreta, publicada antes del sorteo:</span><code>{a.seedHash}</code>
+                    <div className="verify-box"><span className="lbl">Remate verificable</span>
+                      <span style={{ fontSize: 14 }}>Huella de la semilla secreta, publicada antes del remate:</span><code>{a.seedHash}</code>
                       <Link href={`/verificar/${a.slug}`} style={{ fontSize: 14 }}>Cómo se verifica</Link></div>
                   </>
                 ),

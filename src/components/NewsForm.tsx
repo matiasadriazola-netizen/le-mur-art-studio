@@ -6,7 +6,7 @@ export default function NewsForm() {
   const [msg, setMsg] = useState('');
   return (
     <div className="news">
-      <h3>Avísame de nuevos sorteos</h3>
+      <h3>Avísame de nuevos remates</h3>
       <p style={{ fontSize: 14, opacity: 0.8 }}>Un correo cuando se publique una obra nueva o falten pocos tickets.</p>
       <form
         onSubmit={(e) => {
@@ -14,7 +14,7 @@ export default function NewsForm() {
           const v = String(new FormData(e.currentTarget).get('email') ?? '').trim();
           if (!/^\S+@\S+\.\S+$/.test(v)) return setMsg('Escribe un correo válido.');
           e.currentTarget.reset();
-          setMsg('Listo, te avisaremos de los próximos sorteos.');
+          setMsg('Listo, te avisaremos de los próximos remates.');
         }}
         noValidate
       >

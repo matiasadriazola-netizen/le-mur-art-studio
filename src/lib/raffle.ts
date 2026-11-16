@@ -58,7 +58,7 @@ export async function soldCounts() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Mantenimiento: reservas vencidas y plazos de sorteo                 */
+/* Mantenimiento: reservas vencidas y plazos de remate                 */
 /* ------------------------------------------------------------------ */
 
 export async function releaseStale() {
@@ -102,7 +102,7 @@ export async function housekeeping(force = false) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Sorteo                                                              */
+/* Remate                                                              */
 /* ------------------------------------------------------------------ */
 
 export async function runDraw(artworkId: string, partial: boolean) {
@@ -127,7 +127,7 @@ export async function runDraw(artworkId: string, partial: boolean) {
   });
   if (result) {
     await sendMail(result.email, `¡Ganaste "${result.a.title}"!`,
-      `Tu ticket #${result.draw.winnerNumber} ganó el sorteo de "${result.a.title}"${deArtist(result.a.artist)}.\nCódigo de verificación: ${result.draw.code}\nTe contactaremos para coordinar la entrega.`);
+      `Tu ticket #${result.draw.winnerNumber} ganó el remate de "${result.a.title}"${deArtist(result.a.artist)}.\nCódigo de verificación: ${result.draw.code}\nTe contactaremos para coordinar la entrega.`);
   }
   return result?.draw ?? null;
 }
@@ -160,7 +160,7 @@ export function validateBuyer(b: Partial<Buyer>, needsShipping: boolean): Buyer 
   return { firstName, lastName, email, phone, address, comuna };
 }
 
-/** Crea la orden y reserva los números (sorteo) o la obra (venta directa) antes de ir a Webpay. */
+/** Crea la orden y reserva los números (remate) o la obra (venta directa) antes de ir a Webpay. */
 export async function createOrder(artworkId: string, numbers: number[], buyer: Buyer, buyOrder: string, frameOptionId: string | null = null) {
   await housekeeping(true);
   const a = await prisma.artwork.findUnique({ where: { id: artworkId } });
@@ -249,7 +249,7 @@ export async function settleOrder(orderId: string, c: Commit) {
     await sendMail(order.email, `Compraste "${a.title}"`, `Pagaste ${CLP(order.amount)} por "${a.title}"${deArtist(a.artist)}${order.frameName ? `, con ${order.frameName}` : ''}. Te contactaremos al ${order.phone ?? 'teléfono que indicaste'} para coordinar el despacho a ${[order.address, order.comuna].filter(Boolean).join(', ') || 'tu dirección'}.`);
   } else {
     await sendMail(order.email, `Tus tickets para "${a.title}"`,
-      `Compraste los tickets ${order.numbers.split(',').map((n) => '#' + n).join(', ')} por ${CLP(order.amount)}.\nEl sorteo se hace al venderse el último ticket${a.endsAt ? ` o el ${fmtLong(a.endsAt)}` : ''}.`);
+      `Compraste los tickets ${order.numbers.split(',').map((n) => '#' + n).join(', ')} por ${CLP(order.amount)}.\nEl remate se hace al venderse el último ticket${a.endsAt ? ` o el ${fmtLong(a.endsAt)}` : ''}.`);
     const sold = await prisma.ticket.count({ where: { artworkId: a.id, order: { status: 'PAID' } } });
     if (a.totalTickets && sold >= a.totalTickets) await runDraw(a.id, false);
   }

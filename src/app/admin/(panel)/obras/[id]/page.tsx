@@ -26,7 +26,7 @@ export default async function EditObra({ params }: { params: Promise<{ id: strin
       ) : (
         <div className="panel" style={{ padding: 24 }}><h2 style={{ fontSize: 26 }}>{a.title}</h2><p className="muted">{meta(a.artist, a.size, CLP(a.price) + (a.type === 'RIFA' ? ' por ticket' : ''))}</p>
           {a.draw && <p style={{ marginTop: 10 }}>Ganó <b>{a.draw.winnerName}</b> con el ticket #{a.draw.winnerNumber} · {fmtLong(a.draw.createdAt)} · código {a.draw.code} · <Link href={`/verificar/${a.slug}`}>verificación</Link></p>}
-          {a.status === 'CANCELLED' && <p style={{ marginTop: 10 }}>Sorteo cancelado. Los reembolsos están en <Link href="/admin/pagos">Pagos y reembolsos</Link>.</p>}
+          {a.status === 'CANCELLED' && <p style={{ marginTop: 10 }}>Remate cancelado. Los reembolsos están en <Link href="/admin/pagos">Pagos y reembolsos</Link>.</p>}
           {buyer && <p style={{ marginTop: 10 }}>Comprada por <b>{publicName(buyer.firstName, buyer.lastName)}</b> ({buyer.email}{buyer.phone ? ` · ${buyer.phone}` : ''}){buyer.frameName ? ` · ${buyer.frameName}` : ''} · despacho a {[buyer.address, buyer.comuna].filter(Boolean).join(', ')} · {buyer.paidAt && fmtLong(buyer.paidAt)}</p>}
         </div>
       )}
@@ -36,8 +36,8 @@ export default async function EditObra({ params }: { params: Promise<{ id: strin
             <h2 style={{ fontSize: 24 }}>Participantes</h2>
             {a.status === 'OPEN' && (
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {soldN > 0 && <ConfirmAction action={drawNow} id={a.id} label="Sortear ahora entre los vendidos" confirm={`¿Sortear ahora entre ${soldN} tickets? No se puede deshacer.`} />}
-                <ConfirmAction action={cancelNow} id={a.id} label="Cancelar sorteo" confirm="¿Cancelar? Los pagos quedan para reembolso." danger />
+                {soldN > 0 && <ConfirmAction action={drawNow} id={a.id} label="Hacer el remate ahora entre los vendidos" confirm={`¿Hacer el remate ahora entre ${soldN} tickets? No se puede deshacer.`} />}
+                <ConfirmAction action={cancelNow} id={a.id} label="Cancelar remate" confirm="¿Cancelar? Los pagos quedan para reembolso." danger />
               </div>
             )}
           </div>

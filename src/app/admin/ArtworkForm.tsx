@@ -83,9 +83,9 @@ export default function ArtworkForm({ initial, techniques, frames, categories = 
         <input type="hidden" name="type" value={type} />
         {!editing && (
           <div className="seg" role="group" aria-label="Tipo de publicación">
-            <button type="button" aria-pressed={type === 'RIFA'} onClick={() => setType('RIFA')}>Sorteo por ticket</button>
+            <button type="button" aria-pressed={type === 'RIFA'} onClick={() => setType('RIFA')}>Remate por ticket</button>
             <button type="button" aria-pressed={type === 'VENTA'} onClick={() => setType('VENTA')}>Venta directa</button>
-            <button type="button" aria-pressed={type === 'PASADO'} onClick={() => setType('PASADO')}>Sorteo ya realizado</button>
+            <button type="button" aria-pressed={type === 'PASADO'} onClick={() => setType('PASADO')}>Remate ya realizado</button>
           </div>
         )}
         <div className="form">
@@ -141,21 +141,21 @@ export default function ArtworkForm({ initial, techniques, frames, categories = 
 
         {type === 'PASADO' ? (
           <div className="form">
-            <p className="full edit-banner" style={{ margin: 0 }}>Para publicar en Ganadores un sorteo que hiciste fuera del sitio (por ejemplo en vivo por Instagram). Se mostrará como “sorteo realizado en vivo”, sin la verificación automática del sitio.</p>
+            <p className="full edit-banner" style={{ margin: 0 }}>Para publicar en Ganadores un remate que hiciste fuera del sitio (por ejemplo en vivo por Instagram). Se mostrará como “remate realizado en vivo”, sin la verificación automática del sitio.</p>
             <label>Nombre del ganador *<input name="winnerName" defaultValue={initial.past?.winnerName ?? ''} placeholder="Ej: Valentina S." maxLength={60} /></label>
             <label>Número ganador *<input name="winnerNumber" inputMode="numeric" defaultValue={initial.past?.winnerNumber ?? ''} placeholder="Ej: 17" /></label>
-            <label>Cantidad de tickets del sorteo *<input name="totalTickets" inputMode="numeric" defaultValue={initial.totalTickets} /></label>
+            <label>Cantidad de tickets del remate *<input name="totalTickets" inputMode="numeric" defaultValue={initial.totalTickets} /></label>
             <label>Tickets vendidos (opcional)<input name="ticketsSold" inputMode="numeric" defaultValue={initial.past?.ticketsSold ?? ''} placeholder="Si se vendieron todos, déjalo vacío" /></label>
             <label>Precio por ticket (opcional, CLP)<input name="price" inputMode="numeric" defaultValue={initial.price || ''} /></label>
-            <label>Fecha del sorteo (hora de Chile) *<input name="drawAt" type="datetime-local" defaultValue={initial.past?.drawAt ?? ''} /></label>
-            <label className="full">Enlace de respaldo (opcional)<input name="proofUrl" type="url" defaultValue={initial.past?.proofUrl ?? ''} placeholder="https://www.instagram.com/p/… (video o post del sorteo)" /></label>
+            <label>Fecha del remate (hora de Chile) *<input name="drawAt" type="datetime-local" defaultValue={initial.past?.drawAt ?? ''} /></label>
+            <label className="full">Enlace de respaldo (opcional)<input name="proofUrl" type="url" defaultValue={initial.past?.proofUrl ?? ''} placeholder="https://www.instagram.com/p/… (video o post del remate)" /></label>
           </div>
         ) : type === 'RIFA' ? (
           <div className="form">
             <label>Cantidad de tickets *<input name="totalTickets" inputMode="numeric" defaultValue={initial.totalTickets} onChange={(e) => setTickets(+e.target.value.replace(/\D/g, '') || 0)} /></label>
             <label>Precio por ticket (CLP) *<input name="price" inputMode="numeric" defaultValue={initial.price} disabled={locked} onChange={(e) => setTprice(+e.target.value.replace(/\D/g, '') || 0)} /></label>
             <label>Cierre de venta de tickets (hora de Chile) *<input name="endsAt" type="datetime-local" defaultValue={initial.endsAt} /></label>
-            <label>Si no se completa a tiempo<select name="policy" defaultValue={initial.policy}><option value="DRAW">Sortear entre los vendidos</option><option value="EXTEND">Extender 7 días</option><option value="CANCEL">Cancelar y reembolsar</option></select></label>
+            <label>Si no se completa a tiempo<select name="policy" defaultValue={initial.policy}><option value="DRAW">Elegir ganador entre los vendidos</option><option value="EXTEND">Extender 7 días</option><option value="CANCEL">Cancelar y reembolsar</option></select></label>
             <div className="full calc"><span>Recaudación al completar: <b>{CLP(tickets * tprice)}</b></span>{value > 0 && <span>{tickets * tprice >= value ? 'Cubre' : 'No cubre'} el valor referencial ({Math.round((tickets * tprice) / value * 100)}%)</span>}</div>
           </div>
         ) : (
@@ -186,7 +186,7 @@ export default function ArtworkForm({ initial, techniques, frames, categories = 
       <div className="previewside">
         <span className="lbl">Foto principal</span>
         {photos[0] ? <img src={photos[0].src} alt="" style={{ borderRadius: 14, width: '100%', aspectRatio: '4/5', objectFit: 'cover' }} /> : <div className="empty">Sin fotos todavía</div>}
-        <p className="muted" style={{ fontSize: 13 }}>{type === 'RIFA' ? 'Al publicar se genera la semilla secreta del sorteo y se muestra su huella en la ficha.' : type === 'PASADO' ? 'Aparecerá en Ganadores y en la portada con el nombre y número del ganador.' : 'La primera persona que pague se lleva la obra.'}</p>
+        <p className="muted" style={{ fontSize: 13 }}>{type === 'RIFA' ? 'Al publicar se genera la semilla secreta del remate y se muestra su huella en la ficha.' : type === 'PASADO' ? 'Aparecerá en Ganadores y en la portada con el nombre y número del ganador.' : 'La primera persona que pague se lleva la obra.'}</p>
       </div>
     </form>
   );

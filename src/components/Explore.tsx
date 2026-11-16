@@ -4,7 +4,7 @@ import type { CardItem } from '@/lib/catalog';
 import ArtCard from './ArtCard';
 
 const FILTERS = {
-  RIFA: [['all', 'Todos'], ['open', 'Disponibles'], ['hot', 'Por cerrar'], ['done', 'Sorteados']],
+  RIFA: [['all', 'Todos'], ['open', 'Disponibles'], ['hot', 'Por cerrar'], ['done', 'Rematados']],
   VENTA: [['all', 'Todos'], ['open', 'En venta'], ['sold', 'Vendidos']],
 } as const;
 
@@ -15,7 +15,7 @@ export default function Explore({ items }: { items: CardItem[] }) {
   useEffect(() => {
     const q = new URLSearchParams(location.search).get('categoria');
     if (q) setCat(q);
-    const sync = () => { if (location.hash === '#venta') { setMode('VENTA'); setFilter('all'); } if (location.hash === '#sorteos') { setMode('RIFA'); setFilter('all'); } };
+    const sync = () => { if (location.hash === '#venta') { setMode('VENTA'); setFilter('all'); } if (location.hash === '#remates' || location.hash === '#sorteos') { setMode('RIFA'); setFilter('all'); } };
     sync(); window.addEventListener('hashchange', sync); return () => window.removeEventListener('hashchange', sync);
   }, []);
   const now = Date.now();
@@ -34,13 +34,13 @@ export default function Explore({ items }: { items: CardItem[] }) {
     <>
       <div className="sec-head">
         <div><span className="tag">Explorar</span><h2>Todas las obras</h2></div>
-        <p className="sec-sub">{mode === 'RIFA' ? 'Compra uno o más números. Cuando se venden todos, el sistema sortea al ganador.' : 'Obras a precio único. La primera persona que paga se lleva el cuadro.'}</p>
+        <p className="sec-sub">{mode === 'RIFA' ? 'Compra uno o más números. Cuando se venden todos, el sistema elige al ganador al azar.' : 'Obras a precio único. La primera persona que paga se lleva el cuadro.'}</p>
       </div>
       <div className="toolbar">
         <div className="seg" role="group" aria-label="Tipo de compra">
           {(['RIFA', 'VENTA'] as const).map((m) => (
             <button key={m} aria-pressed={mode === m} onClick={() => { setMode(m); setFilter('all'); }}>
-              {m === 'RIFA' ? 'Sorteos por ticket' : 'Venta directa'} <span className="count">{count(m)}</span>
+              {m === 'RIFA' ? 'Remates por ticket' : 'Venta directa'} <span className="count">{count(m)}</span>
             </button>
           ))}
         </div>

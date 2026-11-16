@@ -45,7 +45,7 @@ export default async function Home() {
             <h1>{s.title}<br /><b>{s.highlight}</b></h1>
             <p className="lead">{s.lead}</p>
             <div className="hero-ctas">
-              <Link className="btn btn-lime" href="/#sorteos">Ver sorteos <Icon name="right" /></Link>
+              <Link className="btn btn-lime" href="/#remates">Ver remates <Icon name="right" /></Link>
               <Link className="btn btn-glass" href="/#venta">Comprar directo</Link>
             </div>
             {ticketsSold > 0 && <div className="social-proof"><span>{ticketsSold} tickets vendidos{minTicket ? ` · desde ${CLP(minTicket)} por ticket` : ''}</span></div>}
@@ -65,21 +65,21 @@ export default async function Home() {
       <div className="wrap">
         <div className="trust">
           <span className="lbl">Pagos con</span>
-          <div className="items"><span><Icon name="lock" />Webpay</span><span>Débito, crédito y prepago</span><span><Icon name="shield" />Sorteos con código público</span></div>
+          <div className="items"><span><Icon name="lock" />Webpay</span><span>Débito, crédito y prepago</span><span><Icon name="shield" />Remates con código público</span></div>
         </div>
 
         {picks.some(([a]) => a) && (
           <section id="destacados">
             <div className="sec-head">
               <div><span className="tag">Destacados</span><h2>Obras que están<br />por <em>cerrar</em>.</h2></div>
-              <p className="sec-sub">Sorteos con pocos tickets disponibles y obras en venta directa recién publicadas.</p>
+              <p className="sec-sub">Remates con pocos tickets disponibles y obras en venta directa recién publicadas.</p>
             </div>
             <div className="bento">{picks.map(([a, cls], i) => a && <Overlay key={a.id + i} a={a} cls={cls} />)}</div>
           </section>
         )}
 
         <section id="explorar">
-          <span id="sorteos" /><span id="venta" />
+          <span id="remates" /><span id="venta" />
           <Explore items={items} />
         </section>
 
@@ -88,16 +88,16 @@ export default async function Home() {
             <div>
               <span className="tag">Por qué confiar</span>
               <div className="sec-head" style={{ marginBottom: 0 }}><h2>Transparente en cada <em>ticket</em>.</h2></div>
-              <p className="sec-sub">Cada compra queda registrada y cada sorteo deja un rastro que cualquiera puede revisar.</p>
+              <p className="sec-sub">Cada compra queda registrada y cada remate deja un rastro que cualquiera puede revisar.</p>
               <div className="flist">
-                <div className="feat"><span className="ic"><Icon name="dice" /></span><div><b>Sorteo verificable</b><p>Se ejecuta al venderse el último ticket o al cumplirse el plazo, y publica número, ganador y la prueba para recalcularlo.</p></div></div>
+                <div className="feat"><span className="ic"><Icon name="dice" /></span><div><b>Remate verificable</b><p>Se ejecuta al venderse el último ticket o al cumplirse el plazo, y publica número, ganador y la prueba para recalcularlo.</p></div></div>
                 <div className="feat"><span className="ic"><Icon name="lock" /></span><div><b>Pago con Webpay</b><p>Pagas en el sitio de Transbank. Tus datos de tarjeta nunca pasan por nuestro sitio.</p></div></div>
                 <div className="feat"><span className="ic"><Icon name="box" /></span><div><b>Envío asegurado</b><p>Embalaje profesional y certificado de autenticidad firmado por el artista.</p></div></div>
               </div>
             </div>
             <div className="showcase">
               <img className="bg" src={s.showUrl || '/seed/show.svg'} alt="" />
-              {lastW && <div className="verify"><b>{lastW.drawExternal ? 'Último sorteo' : 'Último sorteo verificado'}</b><span style={{ fontSize: 13 }}>{lastW.winnerName} · ticket #{lastW.winnerNumber}</span><div className="mono">{lastW.drawExternal ? 'Realizado en vivo' : lastW.drawCode}</div></div>}
+              {lastW && <div className="verify"><b>{lastW.drawExternal ? 'Último remate' : 'Último remate verificado'}</b><span style={{ fontSize: 13 }}>{lastW.winnerName} · ticket #{lastW.winnerNumber}</span><div className="mono">{lastW.drawExternal ? 'Realizado en vivo' : lastW.drawCode}</div></div>}
               <div className="minis">{minis.map((a) => <Link key={a.id} className="mini" href={`/obra/${a.slug}`} aria-label={`Ver ${a.title}`}><Img a={a} /><span className="arrow"><Icon name="arrow" /></span></Link>)}</div>
             </div>
           </div>
@@ -106,9 +106,9 @@ export default async function Home() {
         <section id="como">
           <div className="sec-head"><div><span className="tag">Cómo funciona</span><h2>Dos formas de comprar</h2></div></div>
           <div className="how">
-            <div className="panel-soft"><span className="pill hot">Sorteo por ticket</span><h3>Gánalo con un número</h3>
+            <div className="panel-soft"><span className="pill hot">Remate por ticket</span><h3>Gánalo con un número</h3>
               <ol><li><div><b>Elige tus números</b><span>Cada obra tiene una cantidad fija de tickets. Compra uno o varios.</span></div></li>
-                <li><div><b>Se completan los tickets</b><span>El sorteo se hace cuando se vende el último, o al cumplirse la fecha de cierre.</span></div></li>
+                <li><div><b>Se completan los tickets</b><span>El remate se hace cuando se vende el último, o al cumplirse la fecha de cierre.</span></div></li>
                 <li><div><b>Se publica el ganador</b><span>Con nombre, número y una prueba que cualquiera puede verificar.</span></div></li></ol></div>
             <div className="panel-soft"><span className="pill sale">Venta directa</span><h3>Cómpralo hoy</h3>
               <ol><li><div><b>Elige la obra</b><span>Cada cuadro tiene un precio único publicado.</span></div></li>
@@ -118,15 +118,15 @@ export default async function Home() {
         </section>
 
         <section id="ganadores">
-          <div className="sec-head"><div><span className="tag">Ganadores</span><h2>Sorteos realizados</h2></div><p className="sec-sub">Se publica el nombre y la inicial del apellido de cada ganador.</p></div>
+          <div className="sec-head"><div><span className="tag">Ganadores</span><h2>Remates realizados</h2></div><p className="sec-sub">Se publica el nombre y la inicial del apellido de cada ganador.</p></div>
           <div className="wlist">
             {drawn.length ? drawn.map((a) => (
               <Link key={a.id} className="wcard" href={a.drawExternal ? `/obra/${a.slug}` : `/verificar/${a.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                 <div className="stubn">#{String(a.winnerNumber).padStart(2, '0')}</div>
                 <div className="info"><b>{a.winnerName}</b><span>ganó “{a.title}”{deArtist(a.artist)}</span>
-                  <span className="mono">{new Date(a.drawAt!).toLocaleDateString('es-CL', { dateStyle: 'medium' })} · {a.drawSold} tickets · {a.drawExternal ? 'sorteo en vivo' : a.drawCode}</span></div>
+                  <span className="mono">{new Date(a.drawAt!).toLocaleDateString('es-CL', { dateStyle: 'medium' })} · {a.drawSold} tickets · {a.drawExternal ? 'remate en vivo' : a.drawCode}</span></div>
               </Link>
-            )) : <div className="empty">Aún no hay sorteos realizados.</div>}
+            )) : <div className="empty">Aún no hay remates realizados.</div>}
           </div>
         </section>
       </div>
@@ -138,7 +138,7 @@ export default async function Home() {
         </div></div>
         <div className="closing">
           <div className="fcols">
-            <div><b>Explorar</b><Link href="/#sorteos">Sorteos</Link><Link href="/#venta">Venta directa</Link><Link href="/#ganadores">Ganadores</Link></div>
+            <div><b>Explorar</b><Link href="/#remates">Remates</Link><Link href="/#venta">Venta directa</Link><Link href="/#ganadores">Ganadores</Link></div>
             <div><b>Ayuda</b><Link href="/#como">Cómo funciona</Link><Link href="/#como">Envíos</Link></div>
             <div><b>Estudio</b><a href="https://www.instagram.com/le.mur.studio/" target="_blank" rel="noopener noreferrer" className="ig"><Icon name="ig" size={16} />@le.mur.studio</a><Link href="/admin">Administración</Link></div>
           </div>

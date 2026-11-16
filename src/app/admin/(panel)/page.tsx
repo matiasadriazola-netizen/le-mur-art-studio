@@ -6,7 +6,7 @@ import { deleteArtwork, extendRaffle } from '../actions';
 import ConfirmAction from '@/components/ConfirmAction';
 
 const STATUS: Record<string, [string, string]> = {
-  OPEN: ['open', 'Abierta'], DRAWN: ['done', 'Sorteada'], CANCELLED: ['sold', 'Cancelada'], SOLD: ['sold', 'Vendida'],
+  OPEN: ['open', 'Abierta'], DRAWN: ['done', 'Rematada'], CANCELLED: ['sold', 'Cancelada'], SOLD: ['sold', 'Vendida'],
 };
 
 export default async function Dashboard({ searchParams }: { searchParams: Promise<{ ok?: string; f?: string }> }) {
@@ -20,7 +20,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   ]);
   const list = arts.filter((a) => f === 'all' || (f === 'closed' ? a.status !== 'OPEN' : a.type === f && a.status === 'OPEN'));
   const tickets = Object.values(counts).reduce((x, y) => x + y, 0);
-  const chips = [['all', 'Todas'], ['RIFA', 'Sorteos'], ['VENTA', 'Venta directa'], ['closed', 'Cerradas']];
+  const chips = [['all', 'Todas'], ['RIFA', 'Remates'], ['VENTA', 'Venta directa'], ['closed', 'Cerradas']];
   return (
     <>
       {ok && <p className="ok" role="status" style={{ marginBottom: 14 }}>{ok}</p>}
@@ -41,7 +41,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
               return (
                 <tr key={a.id}>
                   <td><div className="obra"><img src={a.imageUrl || '/seed/placeholder.svg'} alt="" /><div><b>{a.title}</b><span className="muted">{a.artist}</span></div></div></td>
-                  <td>{a.type === 'RIFA' ? 'Sorteo' : 'Venta directa'}</td>
+                  <td>{a.type === 'RIFA' ? 'Remate' : 'Venta directa'}</td>
                   <td><span className={`pill ${cls}`}>{label}</span>{a.draw && <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Ganó {a.draw.winnerName} · #{a.draw.winnerNumber}</div>}</td>
                   <td>{a.type === 'RIFA' ? <div className="mini" style={{ width: 110 }}><div className="bar"><span style={{ width: `${(s / (a.totalTickets || 1)) * 100}%` }} /></div><span className="mono muted" style={{ fontSize: 12 }}>{s}/{a.totalTickets}</span></div> : <span className="muted">—</span>}</td>
                   <td>{a.type === 'RIFA' && a.status === 'OPEN' && a.endsAt ? <span style={{ fontSize: 13 }}>{fmtDate(a.endsAt)}</span> : <span className="muted">—</span>}</td>
