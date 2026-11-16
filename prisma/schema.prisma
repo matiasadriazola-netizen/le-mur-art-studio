@@ -141,6 +141,6 @@ model SiteSettings {
   showUrl   String?
   title     String   @default("Arte original,")
   highlight String   @default("desde $2.000.")
-  lead      String   @default("Compra el cuadro a su precio, o participa con tickets en su sorteo. Cuando se vende el último número, el sistema elige al ganador y lo publica con un código verificable.")
+  lead      String   @default("Compra el cuadro a su precio, o participa con tickets en su remate. Cuando se vende el último número, el sistema elige al ganador y lo publica con un código verificable.")
   updatedAt DateTime @updatedAt
 }
